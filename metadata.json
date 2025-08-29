@@ -1,0 +1,5 @@
+{
+  "name": "HRIS Kampus UNUGHA",
+  "description": "A comprehensive, modular Human Resource Information System (HRIS) for UNUGHA University, featuring modules for Employee Management, Attendance, Leave, Payroll, and Performance.",
+  "requestFramePermissions": []
+}
