@@ -3,6 +3,7 @@
 </div>
 
 # Run and deploy your AI Studio app
+Dikembangkan dan diperbaharui sesuai kebutuhan logic system. Fitur yang dikelola : Data Pegawai, Data Komponen Gaji, Perhitungan Gaji standart perhitungan PPH, dan Integrasi dengan Whatsapp Getway API WAHA opensource. 
 
 This contains everything you need to run your app locally.
 
