@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import Modal from '../shared/Modal';
 import Button from '../shared/Button';
@@ -71,14 +72,17 @@ const LeaveRequestDetailModal: React.FC<LeaveRequestDetailModalProps> = ({ isOpe
                 <DetailRow 
                     label="Dokumen Pendukung" 
                     value={
-                        request.documentName ? (
+                        request.documentUrl ? (
                              <a 
-                                href="#" 
-                                onClick={(e) => { e.preventDefault(); alert(`Membuka file: ${request.documentName}`); }} 
+                                href={request.documentUrl}
+                                target="_blank" 
+                                rel="noopener noreferrer" 
                                 className="text-blue-600 hover:underline"
                             >
-                                {request.documentName} <i className="fas fa-external-link-alt fa-xs ml-1"></i>
+                                {request.documentName || 'Lihat Dokumen'} <i className="fas fa-external-link-alt fa-xs ml-1"></i>
                             </a>
+                        ) : request.documentName ? (
+                           <span className="text-gray-700 dark:text-gray-300">{request.documentName} (Tidak diunggah)</span>
                         ) : (
                             '-'
                         )

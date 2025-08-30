@@ -20,6 +20,8 @@ export enum MasterDataView {
   PAYROLL_COMPONENTS = 'PAYROLL_COMPONENTS',
   WHATSAPP_NOTIFICATIONS = 'WHATSAPP_NOTIFICATIONS',
   PARTNER_BANKS = 'PARTNER_BANKS',
+  DATABASE_SETTINGS = 'DATABASE_SETTINGS',
+  R2_STORAGE = 'R2_STORAGE',
 }
 
 export enum ReportView {
@@ -83,6 +85,7 @@ export interface LeaveRequest {
   status: LeaveStatus;
   approver: string;
   documentName?: string;
+  documentUrl?: string;
 }
 
 export interface PayItem {
@@ -172,4 +175,19 @@ export interface PartnerBank {
   id: string;
   name: string;
   code?: string;
+}
+
+export interface D1DatabaseSettings {
+  enabled: boolean;
+  accountId: string;
+  databaseId: string;
+  authToken: string;
+}
+
+export interface R2StorageSettings {
+  enabled: boolean;
+  accountId: string;
+  bucketName: string;
+  accessKeyId: string;
+  secretAccessKey: string;
 }

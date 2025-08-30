@@ -1,8 +1,10 @@
+
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Modal from '../shared/Modal';
 import Button from '../shared/Button';
 import { LeaveRequest, Employee, LeaveStatus } from '../../types';
-import { mockEmployees, mockLeaveTypes, mockLeaveRequests } from '../../data/mockData';
+import { mockEmployees, mockLeaveTypes, mockLeaveRequests, mockR2Settings } from '../../data/mockData';
+import { uploadFileToR2 } from '../../services/apiService';
 
 interface AddLeaveRequestModalProps {
   isOpen: boolean;
@@ -25,6 +27,7 @@ const AddLeaveRequestModal: React.FC<AddLeaveRequestModalProps> = ({ isOpen, onC
     const [errors, setErrors] = useState<Partial<Omit<typeof initialState, 'document'>>>({});
     const [employeeSearchTerm, setEmployeeSearchTerm] = useState('');
     const [isEmployeeDropdownOpen, setEmployeeDropdownOpen] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
     const searchRef = useRef<HTMLDivElement>(null);
 
     const activeEmployees = useMemo(() => mockEmployees.filter(e => e.status === 'Active'), []);
@@ -43,6 +46,7 @@ const AddLeaveRequestModal: React.FC<AddLeaveRequestModalProps> = ({ isOpen, onC
             setErrors({});
             setEmployeeSearchTerm('');
             setEmployeeDropdownOpen(false);
+            setIsUploading(false);
         } else if (employee) {
             // Pre-fill form if employee prop is provided
             setFormData(prev => ({ ...prev, employeeId: employee.id }));
@@ -135,13 +139,35 @@ const AddLeaveRequestModal: React.FC<AddLeaveRequestModalProps> = ({ isOpen, onC
         return Object.keys(newErrors).length === 0;
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (validateForm()) {
             const { document, ...requestData } = formData;
+            let documentUrl: string | undefined = undefined;
+
+            if (document && mockR2Settings.enabled) {
+                setIsUploading(true);
+                try {
+                    const uploadResult = await uploadFileToR2(document);
+                    if (uploadResult.success) {
+                        documentUrl = uploadResult.url;
+                    } else {
+                        alert(`Gagal mengunggah file: ${uploadResult.message}`);
+                        setIsUploading(false);
+                        return; // Stop submission
+                    }
+                } catch (error) {
+                    alert('Terjadi kesalahan saat mengunggah file.');
+                    setIsUploading(false);
+                    return;
+                }
+                setIsUploading(false);
+            }
+            
             onAddRequest({
                 ...requestData,
                 documentName: document?.name,
+                documentUrl: documentUrl,
             });
         }
     };
@@ -264,8 +290,8 @@ const AddLeaveRequestModal: React.FC<AddLeaveRequestModalProps> = ({ isOpen, onC
           <Button type="button" variant="secondary" onClick={onClose}>
             Batal
           </Button>
-          <Button type="submit">
-            Ajukan
+          <Button type="submit" disabled={isUploading}>
+            {isUploading ? 'Mengunggah...' : 'Ajukan'}
           </Button>
         </div>
       </form>

@@ -9,6 +9,8 @@ import LeaveTypeManagement from './LeaveTypeManagement';
 import PayrollComponentManagement from './PayrollComponentManagement';
 import WhatsappNotificationManagement from './WhatsappNotificationManagement';
 import PartnerBankManagement from './PartnerBankManagement';
+import DatabaseSettingsManagement from './DatabaseSettingsManagement';
+import R2StorageManagement from './R2StorageManagement';
 
 
 interface MasterDataCardProps {
@@ -50,6 +52,10 @@ const SettingsManagement: React.FC = () => {
                 return <WhatsappNotificationManagement />;
             case MasterDataView.PARTNER_BANKS:
                 return <PartnerBankManagement />;
+            case MasterDataView.DATABASE_SETTINGS:
+                return <DatabaseSettingsManagement />;
+            case MasterDataView.R2_STORAGE:
+                return <R2StorageManagement />;
             default:
                 return renderOverview();
         }
@@ -61,7 +67,7 @@ const SettingsManagement: React.FC = () => {
             <p className="mb-6 text-gray-600 dark:text-gray-400">
                 Kelola data pokok yang digunakan di seluruh sistem HRIS dan konfigurasikan integrasi dengan layanan eksternal.
             </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <MasterDataCard 
                     title="Kelola Jabatan"
                     description="Tambah, edit, atau hapus daftar jabatan struktural dan fungsional di lingkungan universitas."
@@ -86,6 +92,12 @@ const SettingsManagement: React.FC = () => {
                     icon="fa-wallet"
                     onClick={() => setCurrentView(MasterDataView.PAYROLL_COMPONENTS)}
                 />
+                 <MasterDataCard
+                    title="Bank Mitra"
+                    description="Kelola daftar bank mitra kerja sama untuk keperluan transfer gaji dan administrasi lainnya."
+                    icon="fa-landmark"
+                    onClick={() => setCurrentView(MasterDataView.PARTNER_BANKS)}
+                />
                  <MasterDataCard 
                     title="Notifikasi WhatsApp"
                     description="Konfigurasi integrasi dengan layanan notifikasi WhatsApp untuk mengirim pemberitahuan otomatis."
@@ -93,10 +105,16 @@ const SettingsManagement: React.FC = () => {
                     onClick={() => setCurrentView(MasterDataView.WHATSAPP_NOTIFICATIONS)}
                 />
                 <MasterDataCard
-                    title="Bank Mitra"
-                    description="Kelola daftar bank mitra kerja sama untuk keperluan transfer gaji dan administrasi lainnya."
-                    icon="fa-landmark"
-                    onClick={() => setCurrentView(MasterDataView.PARTNER_BANKS)}
+                    title="Konfigurasi Database"
+                    description="Atur koneksi ke database cloud (Cloudflare D1) untuk sinkronisasi dan penyimpanan data."
+                    icon="fa-database"
+                    onClick={() => setCurrentView(MasterDataView.DATABASE_SETTINGS)}
+                />
+                <MasterDataCard
+                    title="Penyimpanan Objek (R2)"
+                    description="Atur koneksi ke Cloudflare R2 untuk menyimpan file dan dokumen seperti lampiran cuti."
+                    icon="fa-archive"
+                    onClick={() => setCurrentView(MasterDataView.R2_STORAGE)}
                 />
             </div>
         </div>

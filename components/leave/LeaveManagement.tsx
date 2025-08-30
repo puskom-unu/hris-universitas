@@ -1,4 +1,5 @@
 
+
 import React, { useState, useMemo, useEffect } from 'react';
 import Card from '../shared/Card';
 import Button from '../shared/Button';
@@ -210,7 +211,7 @@ const LeaveManagement: React.FC<LeaveManagementProps> = ({ user }) => {
                                 {!isEmployeeView && <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">{request.employeeName}</td>}
                                 <td className="px-6 py-4">
                                     {request.leaveType}
-                                    {request.documentName && (
+                                    {(request.documentName || request.documentUrl) && (
                                         <span className="ml-2 text-gray-400" title={request.documentName}>
                                             <i className="fas fa-paperclip"></i>
                                         </span>

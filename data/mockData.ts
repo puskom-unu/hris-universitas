@@ -1,5 +1,5 @@
 
-import { Employee, AttendanceRecord, LeaveRequest, Payslip, Kpi, User, LeaveStatus, Position, Unit, LeaveType, PayrollComponent, WahaSettings, EmployeeSalaryComponent, PayItem, PartnerBank, PositionHistory } from '../types';
+import { Employee, AttendanceRecord, LeaveRequest, Payslip, Kpi, User, LeaveStatus, Position, Unit, LeaveType, PayrollComponent, WahaSettings, EmployeeSalaryComponent, PayItem, PartnerBank, PositionHistory, D1DatabaseSettings, R2StorageSettings } from '../types';
 import { ROLES } from '../config/roles';
 
 export let mockUsers: User[] = [
@@ -136,7 +136,7 @@ export let mockEmployeeSalaryComponents: EmployeeSalaryComponent[] = [
     { employeeId: 'E001', componentId: 'PC003', amount: 500000 },
     { employeeId: 'E001', componentId: 'PC101', amount: 200000 },
     { employeeId: 'E001', componentId: 'PC102', amount: 150000 },
-    { employeeId: 'E002', componentId: 'PC001', amount: 3500000 },
+    { employeeId: 'E002', componentId: 'PC001', amount: 350000 },
     { employeeId: 'E002', componentId: 'PC004', amount: 400000 },
     { employeeId: 'E002', componentId: 'PC101', amount: 150000 },
 ];
@@ -161,3 +161,18 @@ export let mockPartnerBanks: PartnerBank[] = [
     { id: 'BANK004', name: 'Bank BCA', code: '014' },
     { id: 'BANK005', name: 'Bank Syariah Indonesia', code: '451' },
 ];
+
+export let mockD1Settings: D1DatabaseSettings = {
+    enabled: false,
+    accountId: '',
+    databaseId: '',
+    authToken: '',
+};
+
+export let mockR2Settings: R2StorageSettings = {
+    enabled: false,
+    accountId: '',
+    bucketName: '',
+    accessKeyId: '',
+    secretAccessKey: '',
+};
