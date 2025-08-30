@@ -122,22 +122,40 @@ export const testR2Connection = async (): Promise<{ success: boolean; message: s
 
 
 /**
- * Simulates uploading a file to R2.
+ * Simulates the backend generating a secure, time-limited URL for uploading a file.
+ * This is the recommended secure approach for file uploads.
  */
-export const uploadFileToR2 = async (file: File): Promise<{ success: boolean; url?: string; message: string }> => {
-    console.log(`[API Service] MOCK POST /api/storage/upload for file: ${file.name}`);
-    await delay(1200); // Simulate upload time
+export const generatePresignedUrl = async (fileName: string, contentType: string): Promise<{ success: boolean; uploadUrl?: string; finalUrl?: string; message: string }> => {
+    console.log(`[API Service] MOCK POST /api/storage/generate-upload-url for file: ${fileName}`);
+    await delay(500); // Simulate backend processing
 
     if (!mockR2Settings.enabled) {
         return { success: false, message: 'Penyimpanan Objek R2 tidak diaktifkan.' };
     }
+    
+    // In a real backend, you'd use the Cloudflare SDK to generate this URL.
+    const uniqueFileName = `${Date.now()}-${fileName.replace(/\s/g, '_')}`;
+    const mockUploadUrl = `https://mock-presigned-upload-url.com/${uniqueFileName}?signature=...&expires=...`;
+    const mockFinalUrl = `https://pub.mock-r2-bucket.dev/${uniqueFileName}`;
 
-    if (!mockR2Settings.bucketName || !mockR2Settings.accessKeyId || !mockR2Settings.secretAccessKey) {
-        return { success: false, message: 'Kredensial R2 belum dikonfigurasi.' };
-    }
+    console.log(`[API Service] Generated pre-signed URL: ${mockUploadUrl}`);
+    return { 
+        success: true, 
+        uploadUrl: mockUploadUrl,
+        finalUrl: mockFinalUrl,
+        message: 'URL berhasil dibuat.' 
+    };
+};
 
-    // Simulate a successful upload and return a mock URL
-    const mockUrl = `https://mock-r2-bucket.dev/${Date.now()}-${file.name.replace(/\s/g, '_')}`;
-    console.log(`[API Service] Mock file uploaded to: ${mockUrl}`);
-    return { success: true, url: mockUrl, message: 'File berhasil diunggah.' };
+/**
+ * Simulates the frontend uploading a file directly to the R2 pre-signed URL.
+ */
+export const uploadFileWithPresignedUrl = async (uploadUrl: string, file: File): Promise<{ success: boolean; message: string }> => {
+    console.log(`[API Service] MOCK PUT request to pre-signed URL for file: ${file.name}`);
+    // In a real frontend, this would be:
+    // await fetch(uploadUrl, { method: 'PUT', body: file, headers: { 'Content-Type': file.type } });
+    await delay(1200); // Simulate upload time based on file size if needed
+
+    console.log(`[API Service] Mock file upload to ${uploadUrl} completed.`);
+    return { success: true, message: 'File berhasil diunggah.' };
 };

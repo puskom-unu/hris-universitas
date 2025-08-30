@@ -1,10 +1,11 @@
 
+
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Modal from '../shared/Modal';
 import Button from '../shared/Button';
 import { LeaveRequest, Employee, LeaveStatus } from '../../types';
 import { mockEmployees, mockLeaveTypes, mockLeaveRequests, mockR2Settings } from '../../data/mockData';
-import { uploadFileToR2 } from '../../services/apiService';
+import { generatePresignedUrl, uploadFileWithPresignedUrl } from '../../services/apiService';
 
 interface AddLeaveRequestModalProps {
   isOpen: boolean;
@@ -141,35 +142,42 @@ const AddLeaveRequestModal: React.FC<AddLeaveRequestModalProps> = ({ isOpen, onC
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (validateForm()) {
-            const { document, ...requestData } = formData;
-            let documentUrl: string | undefined = undefined;
+        if (!validateForm()) return;
 
-            if (document && mockR2Settings.enabled) {
-                setIsUploading(true);
-                try {
-                    const uploadResult = await uploadFileToR2(document);
-                    if (uploadResult.success) {
-                        documentUrl = uploadResult.url;
-                    } else {
-                        alert(`Gagal mengunggah file: ${uploadResult.message}`);
-                        setIsUploading(false);
-                        return; // Stop submission
-                    }
-                } catch (error) {
-                    alert('Terjadi kesalahan saat mengunggah file.');
-                    setIsUploading(false);
-                    return;
+        const { document, ...requestData } = formData;
+        let documentUrl: string | undefined = undefined;
+
+        if (document && mockR2Settings.enabled) {
+            setIsUploading(true);
+            try {
+                // Step 1: Get a pre-signed URL from our backend
+                const presignResult = await generatePresignedUrl(document.name, document.type);
+                if (!presignResult.success || !presignResult.uploadUrl || !presignResult.finalUrl) {
+                    throw new Error(presignResult.message || 'Gagal mendapatkan URL untuk unggah file.');
                 }
+
+                // Step 2: Upload the file directly to R2 using the pre-signed URL
+                const uploadResult = await uploadFileWithPresignedUrl(presignResult.uploadUrl, document);
+                if (!uploadResult.success) {
+                    throw new Error(uploadResult.message || 'Gagal mengunggah file ke penyimpanan.');
+                }
+
+                documentUrl = presignResult.finalUrl; // Store the final, public URL
+
+            } catch (error: any) {
+                alert(`Terjadi kesalahan saat mengunggah file: ${error.message}`);
+                setIsUploading(false);
+                return; // Stop submission on failure
+            } finally {
                 setIsUploading(false);
             }
-            
-            onAddRequest({
-                ...requestData,
-                documentName: document?.name,
-                documentUrl: documentUrl,
-            });
         }
+        
+        onAddRequest({
+            ...requestData,
+            documentName: document?.name,
+            documentUrl: documentUrl,
+        });
     };
 
     const FormField: React.FC<{ name: keyof typeof initialState, label: string, children: React.ReactNode }> = ({ name, label, children }) => (
