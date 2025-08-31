@@ -1,18 +1,17 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import Card from '../shared/Card';
 import Button from '../shared/Button';
-import { mockEmployees, mockPositionHistory } from '../../data/mockData';
-import { Employee, PositionHistory } from '../../types';
+import { Employee } from '../../types';
 import Pagination from '../shared/Pagination';
 import AddEmployeeModal from './AddEmployeeModal';
 import ImportEmployeeModal from './ImportEmployeeModal';
 import EmployeeDetailModal from './EmployeeDetailModal';
 import EditEmployeeModal from './EditEmployeeModal';
 import ConfirmationModal from '../shared/ConfirmationModal';
+import { useEmployees } from '../../hooks/useEmployees';
 
 const EmployeeManagement: React.FC = () => {
-    const [employees, setEmployees] = useState<Employee[]>(mockEmployees);
-    const [positionHistory, setPositionHistory] = useState<PositionHistory[]>(mockPositionHistory);
+    const { employees, positionHistory, addEmployee, updateEmployee, deleteEmployee } = useEmployees();
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
     const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
@@ -23,91 +22,26 @@ const EmployeeManagement: React.FC = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const RECORDS_PER_PAGE = 10;
 
-    const handleAddEmployee = (employeeData: Omit<Employee, 'id' | 'avatarUrl'>) => {
-        const newId = `E${(employees.length + 1).toString().padStart(3, '0')}`;
-        const newEmployee: Employee = {
-            id: newId,
-            ...employeeData,
-            avatarUrl: `https://picsum.photos/seed/${newId}/100/100`,
-        };
-        setEmployees(prevEmployees => [newEmployee, ...prevEmployees]);
-
-        const newPositionHistoryRecord: PositionHistory = {
-            id: `PH-${Date.now()}`,
-            employeeId: newId,
-            position: newEmployee.position,
-            unit: newEmployee.unit,
-            startDate: newEmployee.joinDate,
-            endDate: null,
-        };
-        const updatedHistory = [newPositionHistoryRecord, ...positionHistory];
-        setPositionHistory(updatedHistory);
-        mockPositionHistory.splice(0, mockPositionHistory.length, ...updatedHistory);
-
+    const handleAddEmployee = async (employeeData: Omit<Employee, 'id' | 'avatarUrl'>) => {
+        await addEmployee(employeeData);
         setIsAddModalOpen(false);
     };
 
-    const handleUpdateEmployee = (updatedEmployee: Employee) => {
-        const originalEmployee = employees.find(emp => emp.id === updatedEmployee.id);
-        if (!originalEmployee) return;
-
-        setEmployees(prev => 
-            prev.map(emp => emp.id === updatedEmployee.id ? updatedEmployee : emp)
-        );
-
-        if (originalEmployee.position !== updatedEmployee.position || originalEmployee.unit !== updatedEmployee.unit) {
-            const today = new Date().toISOString().split('T')[0];
-            let updatedHistory = [...positionHistory];
-
-            const currentPositionIndex = updatedHistory.findIndex(
-                h => h.employeeId === updatedEmployee.id && h.endDate === null
-            );
-
-            if (currentPositionIndex !== -1) {
-                updatedHistory[currentPositionIndex] = {
-                    ...updatedHistory[currentPositionIndex],
-                    endDate: today,
-                };
-            }
-            
-            const newPositionHistoryRecord: PositionHistory = {
-                id: `PH-${Date.now()}`,
-                employeeId: updatedEmployee.id,
-                position: updatedEmployee.position,
-                unit: updatedEmployee.unit,
-                startDate: today,
-                endDate: null,
-            };
-            updatedHistory.unshift(newPositionHistoryRecord);
-
-            setPositionHistory(updatedHistory);
-            mockPositionHistory.splice(0, mockPositionHistory.length, ...updatedHistory);
-        }
-
+    const handleUpdateEmployee = async (updatedEmployee: Employee) => {
+        await updateEmployee(updatedEmployee);
         setEmployeeToEdit(null);
     };
 
-    const handleImportEmployees = (newEmployeesData: Omit<Employee, 'id' | 'avatarUrl'>[]) => {
-        const newEmployees: Employee[] = newEmployeesData.map((emp, index) => {
-            const newId = `E-import-${Date.now()}-${index}`;
-            return {
-                ...emp,
-                id: newId,
-                avatarUrl: `https://picsum.photos/seed/${newId}/100/100`,
-            };
-        });
-        setEmployees(prev => [...newEmployees, ...prev]);
+    const handleImportEmployees = async (newEmployeesData: Omit<Employee, 'id' | 'avatarUrl'>[]) => {
+        for (const emp of newEmployeesData) {
+            await addEmployee(emp);
+        }
         setIsImportModalOpen(false);
     };
 
-    const handleDeleteEmployee = () => {
+    const handleDeleteEmployee = async () => {
         if (employeeToDelete) {
-            setEmployees(prev => prev.filter(emp => emp.id !== employeeToDelete.id));
-
-            const updatedHistory = positionHistory.filter(h => h.employeeId !== employeeToDelete.id);
-            setPositionHistory(updatedHistory);
-            mockPositionHistory.splice(0, mockPositionHistory.length, ...updatedHistory);
-
+            await deleteEmployee(employeeToDelete.id);
             setEmployeeToDelete(null);
         }
     };

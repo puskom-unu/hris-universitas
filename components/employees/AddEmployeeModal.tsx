@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import Modal from '../shared/Modal';
 import Button from '../shared/Button';
-import { Employee } from '../../types';
-import { mockPositions, mockUnits } from '../../data/mockData';
+import { Employee, Position, Unit } from '../../types';
+import { fetchPositions, fetchUnits } from '../../services/apiService';
 
 interface AddEmployeeModalProps {
   isOpen: boolean;
@@ -27,6 +27,8 @@ const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onClose, on
     
     const [formData, setFormData] = useState(initialState);
     const [errors, setErrors] = useState<Partial<typeof initialState>>({});
+    const [positions, setPositions] = useState<Position[]>([]);
+    const [units, setUnits] = useState<Unit[]>([]);
 
     useEffect(() => {
         if (!isOpen) {
@@ -35,6 +37,11 @@ const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onClose, on
             setErrors({});
         }
     }, [isOpen]);
+
+    useEffect(() => {
+        fetchPositions().then(setPositions);
+        fetchUnits().then(setUnits);
+    }, []);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -104,7 +111,7 @@ const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onClose, on
                     className={`bg-gray-50 border ${errors.position ? 'border-red-500' : 'border-gray-300'} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500`}
                 >
                     <option value="">Pilih Jabatan</option>
-                    {mockPositions.map(p => (
+                    {positions.map(p => (
                         <option key={p.id} value={p.name}>{p.name}</option>
                     ))}
                 </select>
@@ -118,7 +125,7 @@ const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onClose, on
                     className={`bg-gray-50 border ${errors.unit ? 'border-red-500' : 'border-gray-300'} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500`}
                 >
                     <option value="">Pilih Unit Kerja</option>
-                    {mockUnits.map(u => (
+                    {units.map(u => (
                         <option key={u.id} value={u.name}>{u.name}</option>
                     ))}
                 </select>
