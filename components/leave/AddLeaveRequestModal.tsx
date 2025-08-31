@@ -1,6 +1,6 @@
 
 
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Modal from '../shared/Modal';
 import Button from '../shared/Button';
 import { LeaveRequest, Employee, LeaveStatus, LeaveType } from '../../types';
@@ -12,6 +12,9 @@ import {
 } from '../../services/apiService';
 import { useEmployees } from '../../hooks/useEmployees';
 import { useLeaveRequests } from '../../hooks/useLeaveRequests';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { leaveRequestSchema, LeaveRequestFormData } from './schema';
 
 interface AddLeaveRequestModalProps {
   isOpen: boolean;
@@ -21,17 +24,27 @@ interface AddLeaveRequestModalProps {
 }
 
 const AddLeaveRequestModal: React.FC<AddLeaveRequestModalProps> = ({ isOpen, onClose, onAddRequest, employee }) => {
-    const initialState = {
-        employeeId: '',
-        leaveType: '',
-        startDate: new Date().toISOString().split('T')[0],
-        endDate: new Date().toISOString().split('T')[0],
-        reason: '',
-        document: null as File | null,
-    };
-    
-    const [formData, setFormData] = useState(initialState);
-    const [errors, setErrors] = useState<Partial<Omit<typeof initialState, 'document'>>>({});
+    const {
+        register,
+        handleSubmit,
+        formState: { errors, isValid },
+        reset,
+        setValue,
+        watch,
+        setError,
+    } = useForm<LeaveRequestFormData>({
+        resolver: zodResolver(leaveRequestSchema),
+        mode: 'onChange',
+        defaultValues: {
+            employeeId: '',
+            leaveType: '',
+            startDate: new Date().toISOString().split('T')[0],
+            endDate: new Date().toISOString().split('T')[0],
+            reason: '',
+            document: undefined,
+        },
+    });
+
     const [employeeSearchTerm, setEmployeeSearchTerm] = useState('');
     const [isEmployeeDropdownOpen, setEmployeeDropdownOpen] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
@@ -53,16 +66,15 @@ const AddLeaveRequestModal: React.FC<AddLeaveRequestModalProps> = ({ isOpen, onC
 
     useEffect(() => {
         if (!isOpen) {
-            setFormData(initialState);
-            setErrors({});
+            reset();
             setEmployeeSearchTerm('');
             setEmployeeDropdownOpen(false);
             setIsUploading(false);
         } else if (employee) {
-            setFormData(prev => ({ ...prev, employeeId: employee.id }));
+            setValue('employeeId', employee.id);
             setEmployeeSearchTerm(`${employee.name} (${employee.nip})`);
         }
-    }, [isOpen, employee]);
+    }, [isOpen, employee, reset, setValue]);
 
     useEffect(() => {
         fetchLeaveTypes().then(setLeaveTypes);
@@ -81,136 +93,109 @@ const AddLeaveRequestModal: React.FC<AddLeaveRequestModalProps> = ({ isOpen, onC
     }, [searchRef]);
 
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-        const { name, value } = e.target;
-
+    const handleChange = (
+        e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+    ) => {
+        const { name, value, files } = e.target as any;
         if (name === 'document') {
-             const files = (e.target as HTMLInputElement).files;
-             setFormData(prev => ({...prev, document: files ? files[0] : null }));
+            setValue('document', files ? files[0] : undefined);
         } else {
-             setFormData(prev => ({ ...prev, [name]: value }));
-             if (errors[name as keyof typeof errors]) {
-                 setErrors(prev => ({...prev, [name]: undefined}));
-             }
-        }
-        
-        if (name === 'startDate' && value > formData.endDate) {
-            setFormData(prev => ({...prev, endDate: value}));
+            setValue(name as keyof LeaveRequestFormData, value, { shouldValidate: true });
+            if (name === 'startDate' && value > watch('endDate')) {
+                setValue('endDate', value, { shouldValidate: true });
+            }
         }
     };
     
     const handleEmployeeSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setEmployeeSearchTerm(e.target.value);
-        if (formData.employeeId) {
-             setFormData(prev => ({...prev, employeeId: ''})); // Clear selection if user types again
-        }
+        setValue('employeeId', '', { shouldValidate: true });
         setEmployeeDropdownOpen(true);
-         if (errors.employeeId) {
-            setErrors(prev => ({...prev, employeeId: undefined}));
-        }
     };
     
     const handleEmployeeSelect = (selectedEmployee: Employee) => {
-        setFormData(prev => ({...prev, employeeId: selectedEmployee.id}));
+        setValue('employeeId', selectedEmployee.id, { shouldValidate: true });
         setEmployeeSearchTerm(`${selectedEmployee.name} (${selectedEmployee.nip})`);
         setEmployeeDropdownOpen(false);
     };
 
 
-    const validateForm = () => {
-        const newErrors: Partial<Omit<typeof initialState, 'document'>> = {};
-        if (!formData.employeeId) newErrors.employeeId = "Pegawai wajib dipilih dari daftar pencarian";
-        if (!formData.leaveType) newErrors.leaveType = "Jenis cuti wajib dipilih";
-        if (!formData.startDate) newErrors.startDate = "Tanggal mulai wajib diisi";
-        if (!formData.endDate) newErrors.endDate = "Tanggal selesai wajib diisi";
-        if (formData.endDate < formData.startDate) {
-            newErrors.endDate = "Tanggal selesai tidak boleh sebelum tanggal mulai";
-        }
-        if (!formData.reason.trim()) newErrors.reason = "Alasan wajib diisi";
-        
-        // Check for overlapping leave requests only if dates are valid so far
-        if (formData.employeeId && formData.startDate && formData.endDate && !newErrors.endDate) {
-            const newStartDate = new Date(formData.startDate);
-            const newEndDate = new Date(formData.endDate);
-
-            const hasOverlap = leaveRequests.some(req => {
-                // Check only for the selected employee and non-rejected requests
-                if (req.employeeId === formData.employeeId && req.status !== LeaveStatus.REJECTED) {
-                    const existingStartDate = new Date(req.startDate);
-                    const existingEndDate = new Date(req.endDate);
-
-                    // Overlap condition: (StartA <= EndB) and (EndA >= StartB)
-                    return newStartDate <= existingEndDate && newEndDate >= existingStartDate;
-                }
-                return false;
-            });
-
-            if (hasOverlap) {
-                newErrors.startDate = "Tanggal yang dipilih tumpang tindih dengan pengajuan cuti yang sudah ada.";
+    const onSubmit = async (data: LeaveRequestFormData) => {
+        // Overlap check
+        const newStartDate = new Date(data.startDate);
+        const newEndDate = new Date(data.endDate);
+        const hasOverlap = leaveRequests.some(req => {
+            if (req.employeeId === data.employeeId && req.status !== LeaveStatus.REJECTED) {
+                const existingStartDate = new Date(req.startDate);
+                const existingEndDate = new Date(req.endDate);
+                return newStartDate <= existingEndDate && newEndDate >= existingStartDate;
             }
+            return false;
+        });
+        if (hasOverlap) {
+            setError('startDate', {
+                type: 'manual',
+                message: 'Tanggal yang dipilih tumpang tindih dengan pengajuan cuti yang sudah ada.',
+            });
+            return;
         }
 
-        setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
-    };
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!validateForm()) return;
-
-        const { document, ...requestData } = formData;
+        const file = data.document as File | undefined;
         let documentUrl: string | undefined = undefined;
 
-        if (document && r2Enabled) {
+        if (file && r2Enabled) {
             setIsUploading(true);
             try {
-                // Step 1: Get a pre-signed URL from our backend
-                const presignResult = await generatePresignedUrl(document.name, document.type);
+                const presignResult = await generatePresignedUrl(file.name, file.type);
                 if (!presignResult.success || !presignResult.uploadUrl || !presignResult.finalUrl) {
                     throw new Error(presignResult.message || 'Gagal mendapatkan URL untuk unggah file.');
                 }
 
-                // Step 2: Upload the file directly to R2 using the pre-signed URL
-                const uploadResult = await uploadFileWithPresignedUrl(presignResult.uploadUrl, document);
+                const uploadResult = await uploadFileWithPresignedUrl(presignResult.uploadUrl, file);
                 if (!uploadResult.success) {
                     throw new Error(uploadResult.message || 'Gagal mengunggah file ke penyimpanan.');
                 }
 
-                documentUrl = presignResult.finalUrl; // Store the final, public URL
-
+                documentUrl = presignResult.finalUrl;
             } catch (error: any) {
                 alert(`Terjadi kesalahan saat mengunggah file: ${error.message}`);
                 setIsUploading(false);
-                return; // Stop submission on failure
+                return;
             } finally {
                 setIsUploading(false);
             }
         }
-        
+
         onAddRequest({
-            ...requestData,
-            documentName: document?.name,
-            documentUrl: documentUrl,
+            employeeId: data.employeeId,
+            leaveType: data.leaveType,
+            startDate: data.startDate,
+            endDate: data.endDate,
+            reason: data.reason,
+            documentName: file?.name,
+            documentUrl,
         });
     };
 
-    const FormField: React.FC<{ name: keyof typeof initialState, label: string, children: React.ReactNode }> = ({ name, label, children }) => (
+    const FormField: React.FC<{ name: keyof LeaveRequestFormData, label: string, children: React.ReactNode }> = ({ name, label, children }) => (
         <div>
             <label htmlFor={name} className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">{label}</label>
             {children}
-            {errors[name as keyof typeof errors] && <p className="mt-1 text-xs text-red-600 dark:text-red-500">{errors[name as keyof typeof errors]}</p>}
+            {errors[name] && (
+                <p className="mt-1 text-xs text-red-600 dark:text-red-500">{errors[name]?.message as string}</p>
+            )}
         </div>
     );
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Formulir Pengajuan Cuti / Izin">
-      <form onSubmit={handleSubmit} noValidate>
+      <form onSubmit={handleSubmit(onSubmit)} noValidate>
         <div className="space-y-4">
             <FormField name="employeeId" label="Pegawai">
                 <div className="relative" ref={searchRef}>
-                     <input
+                    <input
                         type="text"
-                        id="employeeId"
+                        id="employee-search"
                         value={employeeSearchTerm}
                         onChange={handleEmployeeSearchChange}
                         onFocus={() => setEmployeeDropdownOpen(true)}
@@ -222,8 +207,8 @@ const AddLeaveRequestModal: React.FC<AddLeaveRequestModalProps> = ({ isOpen, onC
                     {isEmployeeDropdownOpen && !employee && filteredEmployees.length > 0 && (
                         <ul className="absolute z-20 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-48 overflow-y-auto">
                             {filteredEmployees.map(emp => (
-                                <li 
-                                    key={emp.id} 
+                                <li
+                                    key={emp.id}
                                     onClick={() => handleEmployeeSelect(emp)}
                                     className="px-4 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
                                 >
@@ -233,15 +218,14 @@ const AddLeaveRequestModal: React.FC<AddLeaveRequestModalProps> = ({ isOpen, onC
                             ))}
                         </ul>
                     )}
+                    <input type="hidden" {...register('employeeId')} />
                 </div>
             </FormField>
 
             <FormField name="leaveType" label="Jenis Cuti / Izin">
                 <select
                     id="leaveType"
-                    name="leaveType"
-                    value={formData.leaveType}
-                    onChange={handleChange}
+                    {...register('leaveType', { onChange: handleChange })}
                     className={`bg-gray-50 border ${errors.leaveType ? 'border-red-500' : 'border-gray-300'} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600`}
                 >
                     <option value="">-- Pilih Jenis Cuti --</option>
@@ -256,9 +240,7 @@ const AddLeaveRequestModal: React.FC<AddLeaveRequestModalProps> = ({ isOpen, onC
                     <input
                         type="date"
                         id="startDate"
-                        name="startDate"
-                        value={formData.startDate}
-                        onChange={handleChange}
+                        {...register('startDate', { onChange: handleChange })}
                         className={`bg-gray-50 border ${errors.startDate ? 'border-red-500' : 'border-gray-300'} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600`}
                     />
                 </FormField>
@@ -266,53 +248,49 @@ const AddLeaveRequestModal: React.FC<AddLeaveRequestModalProps> = ({ isOpen, onC
                     <input
                         type="date"
                         id="endDate"
-                        name="endDate"
-                        value={formData.endDate}
-                        min={formData.startDate}
-                        onChange={handleChange}
+                        min={watch('startDate')}
+                        {...register('endDate', { onChange: handleChange })}
                         className={`bg-gray-50 border ${errors.endDate ? 'border-red-500' : 'border-gray-300'} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600`}
                     />
                 </FormField>
             </div>
-            
+
             <FormField name="reason" label="Alasan">
                 <textarea
                     id="reason"
-                    name="reason"
                     rows={3}
-                    value={formData.reason}
-                    onChange={handleChange}
+                    {...register('reason', { onChange: handleChange })}
                     className={`bg-gray-50 border ${errors.reason ? 'border-red-500' : 'border-gray-300'} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600`}
                     placeholder="Tuliskan alasan pengajuan cuti di sini..."
                 ></textarea>
             </FormField>
 
-             <FormField name="document" label="Dokumen Pendukung (Opsional)">
-                 <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 dark:border-gray-600 border-dashed rounded-md">
-                    <div className="space-y-1 text-center">
-                        <i className="fas fa-file-upload mx-auto h-12 w-12 text-gray-400"></i>
-                        <div className="flex text-sm text-gray-600 dark:text-gray-400">
-                        <label htmlFor="document" className="relative cursor-pointer bg-white dark:bg-gray-800 rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500">
-                            <span>Unggah file</span>
-                            <input id="document" name="document" type="file" className="sr-only" onChange={handleChange} />
-                        </label>
-                        <p className="pl-1">atau seret dan lepas</p>
-                        </div>
-                        {formData.document ? (
-                             <p className="text-sm text-green-600 dark:text-green-400 font-semibold">{formData.document.name}</p>
+            <FormField name="document" label="Dokumen Pendukung (Opsional)">
+                <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 dark:border-gray-600 border-dashed rounded-md">
+                   <div className="space-y-1 text-center">
+                       <i className="fas fa-file-upload mx-auto h-12 w-12 text-gray-400"></i>
+                       <div className="flex text-sm text-gray-600 dark:text-gray-400">
+                       <label htmlFor="document" className="relative cursor-pointer bg-white dark:bg-gray-800 rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500">
+                           <span>Unggah file</span>
+                            <input id="document" type="file" className="sr-only" {...register('document', { onChange: handleChange })} />
+                       </label>
+                       <p className="pl-1">atau seret dan lepas</p>
+                       </div>
+                        {watch('document') ? (
+                             <p className="text-sm text-green-600 dark:text-green-400 font-semibold">{(watch('document') as File).name}</p>
                         ) : (
                              <p className="text-xs text-gray-500 dark:text-gray-500">PDF, PNG, JPG, DOCX (MAX. 2MB)</p>
                         )}
-                    </div>
-                 </div>
+                   </div>
+                </div>
             </FormField>
         </div>
-        
+
         <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200 dark:border-gray-700 mt-6">
           <Button type="button" variant="secondary" onClick={onClose}>
             Batal
           </Button>
-          <Button type="submit" disabled={isUploading}>
+          <Button type="submit" disabled={isUploading || !isValid}>
             {isUploading ? 'Mengunggah...' : 'Ajukan'}
           </Button>
         </div>
