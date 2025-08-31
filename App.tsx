@@ -1,7 +1,6 @@
 
 import React, { useState } from 'react';
-import Sidebar from './components/layout/Sidebar';
-import Header from './components/layout/Header';
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import Dashboard from './components/dashboard/Dashboard';
 import EmployeeManagement from './components/employees/EmployeeManagement';
 import AttendanceManagement from './components/attendance/AttendanceManagement';
@@ -10,26 +9,26 @@ import PayrollManagement from './components/payroll/PayrollManagement';
 import PerformanceManagement from './components/performance/PerformanceManagement';
 import SettingsManagement from './components/settings/SettingsManagement';
 import ReportManagement from './components/reports/ReportManagement';
-import { View, User } from './types';
+import { User } from './types';
 import { mockUsers } from './data/mockData';
 import LoginPage from './components/auth/LoginPage';
 import EmployeeDashboard from './components/dashboard/EmployeeDashboard';
 import MyProfile from './components/profile/MyProfile';
 import { ROLES } from './config/roles';
 import PayrollInfo from './components/payroll/PayrollInfo';
-import Footer from './components/layout/Footer';
+import Layout from './components/layout/Layout';
 
 const App: React.FC = () => {
-  const [currentView, setCurrentView] = useState<View>(View.DASHBOARD);
   const [loggedInUser, setLoggedInUser] = useState<User | null>(null);
   const [loginError, setLoginError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   const handleLogin = (email: string, password: string) => {
     const user = mockUsers.find(u => u.email.toLowerCase() === email.toLowerCase() && u.password === password);
     if (user) {
       setLoggedInUser(user);
       setLoginError(null);
-      setCurrentView(View.DASHBOARD); // Reset to dashboard on login
+      navigate('/dashboard');
     } else {
       setLoginError("Email atau kata sandi salah.");
     }
@@ -37,6 +36,7 @@ const App: React.FC = () => {
 
   const handleLogout = () => {
     setLoggedInUser(null);
+    navigate('/');
   };
 
   const handleUpdateUser = (updatedUser: User) => {
@@ -49,35 +49,6 @@ const App: React.FC = () => {
     }
   };
 
-  const renderView = () => {
-    switch (currentView) {
-      case View.DASHBOARD:
-        // For admin roles, show the main dashboard.
-        // For employee role, this is handled in the main return statement.
-        return <Dashboard />;
-      case View.EMPLOYEES:
-        return <EmployeeManagement />;
-      case View.ATTENDANCE:
-        return <AttendanceManagement />;
-      case View.LEAVE:
-        return <LeaveManagement user={loggedInUser!} />;
-      case View.PAYROLL:
-        return <PayrollManagement />;
-      case View.PERFORMANCE:
-        return <PerformanceManagement />;
-      case View.REPORTS:
-        return <ReportManagement />;
-      case View.SETTINGS:
-        return <SettingsManagement />;
-      case View.MY_PROFILE:
-        return <MyProfile user={loggedInUser!} />;
-      case View.PAYROLL_INFO:
-        return <PayrollInfo user={loggedInUser!} />;
-      default:
-        return <Dashboard />;
-    }
-  };
-
   if (!loggedInUser) {
     return <LoginPage onLogin={handleLogin} loginError={loginError} />;
   }
@@ -85,20 +56,27 @@ const App: React.FC = () => {
   const isEmployee = loggedInUser.role === ROLES.PEGAWAI;
 
   return (
-    <div className="flex h-screen bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200">
-      <Sidebar user={loggedInUser} currentView={currentView} setCurrentView={setCurrentView} />
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <Header user={loggedInUser} onUpdateUser={handleUpdateUser} onLogout={handleLogout} />
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 dark:bg-gray-900 p-6">
-          {isEmployee && currentView === View.DASHBOARD ? (
-            <EmployeeDashboard user={loggedInUser} />
-          ) : (
-            renderView()
-          )}
-        </main>
-        <Footer />
-      </div>
-    </div>
+    <Routes>
+      <Route
+        element={<Layout user={loggedInUser} onUpdateUser={handleUpdateUser} onLogout={handleLogout} />}
+      >
+        <Route
+          path="/dashboard"
+          element={isEmployee ? <EmployeeDashboard user={loggedInUser!} /> : <Dashboard />}
+        />
+        <Route path="/employees" element={<EmployeeManagement />} />
+        <Route path="/attendance" element={<AttendanceManagement />} />
+        <Route path="/leave" element={<LeaveManagement user={loggedInUser!} />} />
+        <Route path="/payroll" element={<PayrollManagement />} />
+        <Route path="/performance" element={<PerformanceManagement />} />
+        <Route path="/reports" element={<ReportManagement />} />
+        <Route path="/settings" element={<SettingsManagement />} />
+        <Route path="/profile" element={<MyProfile user={loggedInUser!} />} />
+        <Route path="/payroll-info" element={<PayrollInfo user={loggedInUser!} />} />
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      </Route>
+    </Routes>
   );
 };
 

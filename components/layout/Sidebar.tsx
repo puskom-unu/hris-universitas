@@ -1,55 +1,53 @@
 
 import React from 'react';
+import { NavLink } from 'react-router-dom';
 import { View, User } from '../../types';
 import { rolePermissions } from '../../config/roles';
 
 interface SidebarProps {
   user: User;
-  currentView: View;
-  setCurrentView: (view: View) => void;
 }
 
 interface NavItemProps {
-  view: View;
+  to: string;
   label: string;
   icon: string;
-  currentView: View;
-  onClick: (view: View) => void;
 }
 
-const NavItem: React.FC<NavItemProps> = ({ view, label, icon, currentView, onClick }) => (
+const NavItem: React.FC<NavItemProps> = ({ to, label, icon }) => (
   <li>
-    <a
-      href="#"
-      onClick={(e) => { e.preventDefault(); onClick(view); }}
-      className={`flex items-center p-3 my-1 rounded-lg transition-colors duration-200 ${
-        currentView === view
-          ? 'bg-blue-600 text-white'
-          : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-      }`}
+    <NavLink
+      to={to}
+      className={({ isActive }) =>
+        `flex items-center p-3 my-1 rounded-lg transition-colors duration-200 ${
+          isActive
+            ? 'bg-blue-600 text-white'
+            : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+        }`
+      }
     >
       <i className={`fas ${icon} w-6 text-center`}></i>
       <span className="ml-4 font-medium">{label}</span>
-    </a>
+    </NavLink>
   </li>
 );
 
-const Sidebar: React.FC<SidebarProps> = ({ user, currentView, setCurrentView }) => {
+const Sidebar: React.FC<SidebarProps> = ({ user }) => {
   const availableViews = rolePermissions[user.role] || [];
 
   const navItems = [
-      { view: View.DASHBOARD, label: "Dashboard", icon: "fa-tachometer-alt" },
-      { view: View.MY_PROFILE, label: "Profil Saya", icon: "fa-user" },
-      { view: View.PAYROLL_INFO, label: "Info Payroll", icon: "fa-money-bill-wave" },
-      { view: View.EMPLOYEES, label: "Pegawai", icon: "fa-users" },
-      { view: View.ATTENDANCE, label: "Presensi", icon: "fa-clock" },
-      { view: View.LEAVE, label: "Cuti & Izin", icon: "fa-calendar-alt" },
-      { view: View.PAYROLL, label: "Payroll", icon: "fa-file-invoice-dollar" },
-      { view: View.PERFORMANCE, label: "Kinerja (KPI)", icon: "fa-chart-line" },
-      { view: View.REPORTS, label: "Laporan", icon: "fa-file-alt" },
+      { view: View.DASHBOARD, label: "Dashboard", icon: "fa-tachometer-alt", to: "/dashboard" },
+      { view: View.MY_PROFILE, label: "Profil Saya", icon: "fa-user", to: "/profile" },
+      { view: View.PAYROLL_INFO, label: "Info Payroll", icon: "fa-money-bill-wave", to: "/payroll-info" },
+      { view: View.EMPLOYEES, label: "Pegawai", icon: "fa-users", to: "/employees" },
+      { view: View.ATTENDANCE, label: "Presensi", icon: "fa-clock", to: "/attendance" },
+      { view: View.LEAVE, label: "Cuti & Izin", icon: "fa-calendar-alt", to: "/leave" },
+      { view: View.PAYROLL, label: "Payroll", icon: "fa-file-invoice-dollar", to: "/payroll" },
+      { view: View.PERFORMANCE, label: "Kinerja (KPI)", icon: "fa-chart-line", to: "/performance" },
+      { view: View.REPORTS, label: "Laporan", icon: "fa-file-alt", to: "/reports" },
   ];
-  
-  const settingsItem = { view: View.SETTINGS, label: "Pengaturan", icon: "fa-cog" };
+
+  const settingsItem = { view: View.SETTINGS, label: "Pengaturan", icon: "fa-cog", to: "/settings" };
 
   const accessibleNavItems = navItems.filter(item => availableViews.includes(item.view));
   const canAccessSettings = availableViews.includes(View.SETTINGS);
@@ -64,13 +62,13 @@ const Sidebar: React.FC<SidebarProps> = ({ user, currentView, setCurrentView }) 
       <nav className="p-4">
         <ul>
           {accessibleNavItems.map(item => (
-             <NavItem key={item.view} view={item.view} label={item.label} icon={item.icon} currentView={currentView} onClick={setCurrentView} />
+             <NavItem key={item.view} to={item.to} label={item.label} icon={item.icon} />
           ))}
 
           {canAccessSettings && (
              <>
                 <div className="my-4 border-t border-gray-200 dark:border-gray-700"></div>
-                <NavItem view={settingsItem.view} label={settingsItem.label} icon={settingsItem.icon} currentView={currentView} onClick={setCurrentView} />
+                <NavItem to={settingsItem.to} label={settingsItem.label} icon={settingsItem.icon} />
              </>
           )}
         </ul>
