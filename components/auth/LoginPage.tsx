@@ -1,5 +1,8 @@
-import React, { useState } from 'react';
+import React from 'react';
 import Button from '../shared/Button';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { loginSchema, LoginFormData } from './schema';
 
 interface LoginPageProps {
   onLogin: (email: string, password: string) => void;
@@ -7,12 +10,19 @@ interface LoginPageProps {
 }
 
 const LoginPage: React.FC<LoginPageProps> = ({ onLogin, loginError }) => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isValid },
+    reset,
+  } = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+    mode: 'onChange',
+  });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onLogin(email, password);
+  const onSubmit = (data: LoginFormData) => {
+    onLogin(data.email, data.password);
+    reset();
   };
 
   return (
@@ -25,7 +35,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, loginError }) => {
           </div>
           <h2 className="text-xl text-gray-600 dark:text-gray-300">Selamat Datang Kembali</h2>
         </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)} noValidate>
           {loginError && (
             <div className="p-3 bg-red-100 dark:bg-red-900/50 rounded-lg text-center">
               <p className="text-sm font-semibold text-red-700 dark:text-red-300">
@@ -39,33 +49,33 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, loginError }) => {
               <label htmlFor="email-address" className="sr-only">Alamat Email</label>
               <input
                 id="email-address"
-                name="email"
                 type="email"
                 autoComplete="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
+                {...register('email')}
+                className={`appearance-none rounded-none relative block w-full px-3 py-2 border placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white ${errors.email ? 'border-red-500' : 'border-gray-300'}`}
                 placeholder="Alamat Email"
               />
+              {errors.email && (
+                <p className="mt-1 text-xs text-red-600 dark:text-red-500">{errors.email.message}</p>
+              )}
             </div>
             <div>
               <label htmlFor="password-for-login" className="sr-only">Kata Sandi</label>
               <input
                 id="password-for-login"
-                name="password"
                 type="password"
                 autoComplete="current-password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
+                {...register('password')}
+                className={`appearance-none rounded-none relative block w-full px-3 py-2 border placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white ${errors.password ? 'border-red-500' : 'border-gray-300'}`}
                 placeholder="Kata Sandi"
               />
+              {errors.password && (
+                <p className="mt-1 text-xs text-red-600 dark:text-red-500">{errors.password.message}</p>
+              )}
             </div>
           </div>
           <div>
-            <Button type="submit" className="w-full">
+            <Button type="submit" className="w-full" disabled={!isValid}>
               Login
             </Button>
           </div>
