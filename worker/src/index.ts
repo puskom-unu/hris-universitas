@@ -19,6 +19,9 @@ export interface Env {
   DB: D1Database;
   BUCKET: R2Bucket;
   PUBLIC_R2_URL: string;
+  WAHA_ENDPOINT: string;
+  WAHA_SESSION_NAME: string;
+  WAHA_API_KEY: string;
 }
 
 const router = Router();
@@ -74,6 +77,17 @@ router
     const { password: _pw, ...userData } = user;
     return json({ success: true, user: userData });
   })
+
+  // Worker config status
+  .get('/api/config/status', (_req: Request, env: Env) =>
+    json({
+      waha: {
+        endpoint: Boolean(env.WAHA_ENDPOINT),
+        sessionName: Boolean(env.WAHA_SESSION_NAME),
+        hasApiKey: Boolean(env.WAHA_API_KEY),
+      },
+    })
+  )
 
   // D1 settings
   .get('/api/settings/database', async (_req: Request, env: Env) => {

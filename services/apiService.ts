@@ -1,4 +1,4 @@
-import { D1DatabaseSettings, R2StorageSettings } from '../types';
+import { D1DatabaseSettings, R2StorageSettings, WorkerConfigStatus } from '../types';
 import { API_BASE_URL } from '../config/api';
 import {
   mockEmployees,
@@ -71,6 +71,10 @@ export const generatePresignedUrl = async (
     method: 'POST',
     body: JSON.stringify({ fileName, contentType }),
   });
+};
+
+export const getWorkerConfigStatus = async (): Promise<WorkerConfigStatus> => {
+  return jsonFetch('/api/config/status');
 };
 
 export const uploadFileWithPresignedUrl = async (

@@ -167,8 +167,15 @@ export interface WahaSettings {
   enabled: boolean;
   endpoint: string;
   sessionName: string;
-  apiKey?: string;
   triggers: WahaTriggers;
+}
+
+export interface WorkerConfigStatus {
+  waha: {
+    endpoint: boolean;
+    sessionName: boolean;
+    hasApiKey: boolean;
+  };
 }
 
 export interface PartnerBank {

@@ -175,3 +175,16 @@ CREATE TABLE leave_requests (
 ```
 
 Dengan mengikuti panduan ini, Anda telah berhasil mengkonfigurasi infrastruktur cloud yang diperlukan untuk menjalankan aplikasi HRIS UNUGHA dengan data yang persisten dan aman.
+
+## Bagian 4: Menyuntikkan Konfigurasi ke Lingkungan Produksi
+
+Gunakan variabel lingkungan pada Cloudflare Worker untuk menyimpan konfigurasi tanpa mengungkapkan nilai rahasia ke klien.
+
+1. Masukkan nilai non-sensitif seperti `WAHA_ENDPOINT` dan `WAHA_SESSION_NAME` pada bagian `[vars]` di `wrangler.toml`.
+2. Simpan nilai rahasia seperti token API menggunakan perintah Wrangler:
+
+   ```bash
+   wrangler secret put WAHA_API_KEY
+   ```
+
+3. Worker menyediakan endpoint `GET /api/config/status` untuk memeriksa apakah konfigurasi telah diisi tanpa menampilkan nilai rahasia.
