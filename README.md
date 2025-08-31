@@ -28,4 +28,4 @@ This repository now ships with a Cloudflare Worker backend (see [`worker/`](work
 3. Initialize the database: `wrangler d1 execute HRIS_DB --file ./schema.sql`
 4. Start the worker: `npm run dev`
 
-The frontend expects the worker URL in the `VITE_API_BASE_URL` environment variable. Set it in `.env.local` before running `npm run dev`.
+The frontend expects the worker base URL (for example, `http://127.0.0.1:8787`) in the `VITE_API_BASE_URL` environment variable. Set it in `.env.local` before running `npm run dev`.
