@@ -145,7 +145,6 @@ export const mockWahaSettings: WahaSettings = {
     enabled: true,
     endpoint: 'http://localhost:3000',
     sessionName: 'default',
-    apiKey: '',
     triggers: {
         leaveApproved: true,
         leaveRejected: true,

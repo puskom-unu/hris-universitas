@@ -13,3 +13,5 @@ bucket_name = "hris-bucket"
 
 [vars]
 PUBLIC_R2_URL = "https://example.r2.dev/your-bucket"
+WAHA_ENDPOINT = "https://waha.example.com"
+WAHA_SESSION_NAME = "default"

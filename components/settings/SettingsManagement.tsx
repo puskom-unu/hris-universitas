@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Card from '../shared/Card';
 import Button from '../shared/Button';
 import { MasterDataView } from '../../types';
@@ -11,6 +11,8 @@ import WhatsappNotificationManagement from './WhatsappNotificationManagement';
 import PartnerBankManagement from './PartnerBankManagement';
 import DatabaseSettingsManagement from './DatabaseSettingsManagement';
 import R2StorageManagement from './R2StorageManagement';
+import { getWorkerConfigStatus } from '../../services/apiService';
+import { WorkerConfigStatus } from '../../types';
 
 
 interface MasterDataCardProps {
@@ -37,6 +39,11 @@ const MasterDataCard: React.FC<MasterDataCardProps> = ({ title, description, ico
 
 const SettingsManagement: React.FC = () => {
     const [currentView, setCurrentView] = useState<MasterDataView>(MasterDataView.NONE);
+    const [configStatus, setConfigStatus] = useState<WorkerConfigStatus | null>(null);
+
+    useEffect(() => {
+        getWorkerConfigStatus().then(setConfigStatus).catch(() => setConfigStatus(null));
+    }, []);
 
     const renderView = () => {
         switch(currentView) {
@@ -64,6 +71,11 @@ const SettingsManagement: React.FC = () => {
     const renderOverview = () => (
         <div>
             <h2 className="text-2xl font-bold mb-4">Pengaturan Master Data & Integrasi</h2>
+            {configStatus && (
+                <div className="mb-4 p-4 bg-gray-100 dark:bg-gray-700 rounded-md text-sm">
+                    <p>API Key WAHA terpasang: {configStatus.waha.hasApiKey ? 'Ya' : 'Tidak'}</p>
+                </div>
+            )}
             <p className="mb-6 text-gray-600 dark:text-gray-400">
                 Kelola data pokok yang digunakan di seluruh sistem HRIS dan konfigurasikan integrasi dengan layanan eksternal.
             </p>

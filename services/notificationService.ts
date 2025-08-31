@@ -50,9 +50,6 @@ export const sendWhatsappMessage = async (
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
   };
-  if (settings.apiKey) {
-    headers['X-Api-Key'] = settings.apiKey;
-  }
 
   const body = JSON.stringify({
     chatId: `${recipient}@c.us`,

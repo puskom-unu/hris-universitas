@@ -117,7 +117,6 @@ const WhatsappNotificationManagement: React.FC = () => {
                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <FormField name="endpoint" label="WAHA Endpoint URL" />
                         <FormField name="sessionName" label="Nama Sesi (Session Name)" />
-                        <FormField name="apiKey" label="API Key (Opsional)" placeholder="Kosongkan jika tidak ada" />
                      </div>
                 </div>
 
