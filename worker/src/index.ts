@@ -1,3 +1,11 @@
+import { LeaveStatus } from '../../types';
+import {
+  mockEmployees,
+  mockLeaveRequests,
+  mockPayslips,
+  mockUsers,
+} from '../../data/mockData';
+
 export interface Env {
   DB: D1Database;
   BUCKET: R2Bucket;
@@ -15,6 +23,84 @@ export default {
     const url = new URL(request.url);
 
     try {
+      // Employees
+      if (url.pathname === '/api/employees') {
+        if (request.method === 'GET') {
+          return json(mockEmployees);
+        }
+        if (request.method === 'POST') {
+          const body = await request.json();
+          const newEmployee = { id: `E${Date.now()}`, ...body };
+          mockEmployees.push(newEmployee);
+          return json(newEmployee, { status: 201 });
+        }
+      }
+
+      if (url.pathname.startsWith('/api/employees/')) {
+        const id = url.pathname.split('/')[3];
+        const index = mockEmployees.findIndex((e) => e.id === id);
+        if (request.method === 'PUT') {
+          if (index === -1) return json({ message: 'Pegawai tidak ditemukan.' }, { status: 404 });
+          const body = await request.json();
+          mockEmployees[index] = { ...mockEmployees[index], ...body };
+          return json(mockEmployees[index]);
+        }
+        if (request.method === 'DELETE') {
+          if (index === -1) return json({ message: 'Pegawai tidak ditemukan.' }, { status: 404 });
+          mockEmployees.splice(index, 1);
+          return json({ message: 'Pegawai berhasil dihapus.' });
+        }
+      }
+
+      // Leave requests
+      if (url.pathname === '/api/leave-requests') {
+        if (request.method === 'GET') {
+          return json(mockLeaveRequests);
+        }
+        if (request.method === 'POST') {
+          const body = await request.json();
+          const newRequest = {
+            id: `L${Date.now()}`,
+            status: LeaveStatus.PENDING,
+            ...body,
+          };
+          mockLeaveRequests.push(newRequest);
+          return json(newRequest, { status: 201 });
+        }
+      }
+
+      if (url.pathname.startsWith('/api/leave-requests/') && url.pathname.endsWith('/status') && request.method === 'PUT') {
+        const parts = url.pathname.split('/');
+        const id = parts[3];
+        const body = await request.json();
+        const requestIndex = mockLeaveRequests.findIndex((r) => r.id === id);
+        if (requestIndex === -1) return json({ message: 'Permohonan tidak ditemukan.' }, { status: 404 });
+        mockLeaveRequests[requestIndex].status = body.status;
+        return json(mockLeaveRequests[requestIndex]);
+      }
+
+      // Payslips
+      if (url.pathname === '/api/payslips' && request.method === 'GET') {
+        const period = url.searchParams.get('period');
+        const list = period ? mockPayslips.filter((p) => p.period === period) : mockPayslips;
+        return json(list);
+      }
+
+      if (url.pathname === '/api/payroll/generate' && request.method === 'POST') {
+        return json({ success: true, message: 'Payroll berhasil dibuat.' });
+      }
+
+      // Authentication
+      if (url.pathname === '/api/login' && request.method === 'POST') {
+        const { email, password } = await request.json();
+        const user = mockUsers.find((u) => u.email === email && u.password === password);
+        if (!user) {
+          return json({ success: false, message: 'Email atau kata sandi salah.' }, { status: 401 });
+        }
+        const { password: _pw, ...userData } = user;
+        return json({ success: true, user: userData });
+      }
+
       // D1 settings
       if (url.pathname === '/api/settings/database') {
         if (request.method === 'GET') {
