@@ -11,7 +11,7 @@ import ConfirmationModal from '../shared/ConfirmationModal';
 import { useEmployees } from '../../hooks/useEmployees';
 
 const EmployeeManagement: React.FC = () => {
-    const { employees, positionHistory, addEmployee, updateEmployee, deleteEmployee } = useEmployees();
+    const { employees, positionHistory, addEmployee, updateEmployee, deleteEmployee, loading, error } = useEmployees();
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
     const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
@@ -67,6 +67,22 @@ const EmployeeManagement: React.FC = () => {
         return filteredEmployees.slice(startIndex, startIndex + RECORDS_PER_PAGE);
     }, [filteredEmployees, currentPage]);
 
+
+    if (loading) {
+        return (
+            <Card>
+                <p>Memuat data pegawai...</p>
+            </Card>
+        );
+    }
+
+    if (error) {
+        return (
+            <Card>
+                <p className="text-red-500">Gagal memuat data pegawai.</p>
+            </Card>
+        );
+    }
 
     return (
         <Card>

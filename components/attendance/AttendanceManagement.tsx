@@ -9,8 +9,8 @@ import { useAttendanceRecords } from '../../hooks/useAttendance';
 import { useEmployees } from '../../hooks/useEmployees';
 
 const AttendanceManagement: React.FC = () => {
-    const { attendanceRecords, addRecord } = useAttendanceRecords();
-    const { employees } = useEmployees();
+    const { attendanceRecords, addRecord, loading: attendanceLoading, error: attendanceError } = useAttendanceRecords();
+    const { employees, loading: employeesLoading, error: employeesError } = useEmployees();
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
     // Default dates are set to October 2023 to ensure sample data is visible
     const [startDate, setStartDate] = useState('2023-10-01');
@@ -76,6 +76,22 @@ const AttendanceManagement: React.FC = () => {
         setIsImportModalOpen(false);
     };
 
+
+    if (attendanceLoading || employeesLoading) {
+        return (
+            <Card>
+                <p>Memuat data...</p>
+            </Card>
+        );
+    }
+
+    if (attendanceError || employeesError) {
+        return (
+            <Card>
+                <p className="text-red-500">Gagal memuat data presensi.</p>
+            </Card>
+        );
+    }
 
     return (
         <>

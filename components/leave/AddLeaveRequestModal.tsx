@@ -38,8 +38,24 @@ const AddLeaveRequestModal: React.FC<AddLeaveRequestModalProps> = ({ isOpen, onC
     const [leaveTypes, setLeaveTypes] = useState<LeaveType[]>([]);
     const [r2Enabled, setR2Enabled] = useState(false);
     const searchRef = useRef<HTMLDivElement>(null);
-    const { employees } = useEmployees();
-    const { leaveRequests } = useLeaveRequests();
+    const { employees, loading: employeesLoading, error: employeesError } = useEmployees();
+    const { leaveRequests, loading: leaveLoading, error: leaveError } = useLeaveRequests();
+
+    if (employeesLoading || leaveLoading) {
+        return (
+            <Modal isOpen={isOpen} onClose={onClose} title="Formulir Pengajuan Cuti / Izin">
+                <p>Memuat data...</p>
+            </Modal>
+        );
+    }
+
+    if (employeesError || leaveError) {
+        return (
+            <Modal isOpen={isOpen} onClose={onClose} title="Formulir Pengajuan Cuti / Izin">
+                <p className="text-red-500">Gagal memuat data.</p>
+            </Modal>
+        );
+    }
 
     const activeEmployees = useMemo(() => employees.filter(e => e.status === 'Active'), [employees]);
 

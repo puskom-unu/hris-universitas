@@ -30,9 +30,25 @@ const StatusBadge: React.FC<{ status: LeaveStatus }> = ({ status }) => {
 
 const LeaveManagement: React.FC = () => {
     const { user } = useAuth();
-    const { leaveRequests, addRequest, updateRequest } = useLeaveRequests();
-    const { employees } = useEmployees();
+    const { leaveRequests, addRequest, updateRequest, loading: leaveLoading, error: leaveError } = useLeaveRequests();
+    const { employees, loading: employeesLoading, error: employeesError } = useEmployees();
     if (!user) return null;
+
+    if (leaveLoading || employeesLoading) {
+        return (
+            <Card>
+                <p>Memuat data cuti...</p>
+            </Card>
+        );
+    }
+
+    if (leaveError || employeesError) {
+        return (
+            <Card>
+                <p className="text-red-500">Gagal memuat data cuti.</p>
+            </Card>
+        );
+    }
     const isEmployeeView = user.role === ROLES.PEGAWAI;
     const currentEmployee = useMemo(() => employees.find(e => e.email === user.email), [user.email, employees]);
 

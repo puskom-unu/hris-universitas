@@ -6,18 +6,29 @@ import {
   updateAttendanceRecord as apiUpdateAttendanceRecord,
   deleteAttendanceRecord as apiDeleteAttendanceRecord,
 } from '../services/apiService';
+import { logError } from '../utils/logging';
 
 let attendanceCache: AttendanceRecord[] | null = null;
 
 export const useAttendanceRecords = () => {
   const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>(attendanceCache || []);
+  const [loading, setLoading] = useState(!attendanceCache);
+  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
     if (!attendanceCache) {
-      fetchAttendanceRecords().then(data => {
-        attendanceCache = data;
-        setAttendanceRecords(data);
-      });
+      setLoading(true);
+      fetchAttendanceRecords()
+        .then(data => {
+          attendanceCache = data;
+          setAttendanceRecords(data);
+          setError(null);
+        })
+        .catch(err => {
+          setError(err);
+          logError(err);
+        })
+        .finally(() => setLoading(false));
     }
   }, []);
 
@@ -39,7 +50,7 @@ export const useAttendanceRecords = () => {
     setAttendanceRecords(attendanceCache);
   };
 
-  return { attendanceRecords, addRecord, updateRecord, deleteRecord };
+  return { attendanceRecords, addRecord, updateRecord, deleteRecord, loading, error };
 };
 
 export default useAttendanceRecords;
