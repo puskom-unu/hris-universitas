@@ -1,4 +1,4 @@
-name = "hris-worker"
+name = "hrisworker"
 main = "src/index.ts"
 compatibility_date = "2024-10-12"
 
