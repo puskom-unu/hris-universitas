@@ -1,5 +1,5 @@
-// This service uses the SheetJS library, which is expected to be loaded via a script tag in index.html
-declare var XLSX: any;
+// This service uses the SheetJS library
+import * as XLSX from 'xlsx';
 
 /**
  * Exports an array of objects to an Excel file, with optional custom headers.
@@ -8,8 +8,8 @@ declare var XLSX: any;
  * @param sheetName The name of the worksheet inside the Excel file.
  * @param headerOptions Optional configuration for custom headers.
  */
-export const exportToExcel = (
-  data: any[],
+export const exportToExcel = <T extends object>(
+  data: Array<T>,
   fileName: string,
   sheetName: string,
   headerOptions?: { mainHeader: string; subHeader: string }
@@ -21,9 +21,9 @@ export const exportToExcel = (
   }
 
   try {
-    let finalData: any[][] = [];
+    const finalData: unknown[][] = [];
     const headers = Object.keys(data[0]);
-    let merges = [];
+    const merges: XLSX.Range[] = [];
 
     // Add custom headers if provided
     if (headerOptions && headers.length > 0) {
@@ -39,7 +39,9 @@ export const exportToExcel = (
     finalData.push(headers);
     
     // Add data rows
-    const dataAsArray = data.map(row => headers.map(header => row[header]));
+    const dataAsArray = data.map((row) =>
+      headers.map((header) => (row as Record<string, unknown>)[header])
+    );
     finalData.push(...dataAsArray);
 
     const worksheet = XLSX.utils.aoa_to_sheet(finalData);
@@ -48,13 +50,13 @@ export const exportToExcel = (
     }
 
     // Auto-fit columns
-    const colWidths = headers.map((header, i) => {
+    const colWidths: XLSX.ColInfo[] = headers.map((_, i) => {
       // Get the length of all cells in the column, including custom headers
-      const columnData = finalData.map(row => row[i]);
+      const columnData = finalData.map((row) => row[i]);
       const maxLength = Math.max(
         ...columnData
-          .filter(cell => cell !== null && cell !== undefined) // filter out null/undefined
-          .map(cell => String(cell).length)
+          .filter((cell) => cell !== null && cell !== undefined) // filter out null/undefined
+          .map((cell) => String(cell).length)
       );
       return { wch: maxLength + 2 };
     });
