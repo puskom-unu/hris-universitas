@@ -1,12 +1,9 @@
 
 import React, { useMemo } from 'react';
 import Card from '../shared/Card';
-import { User, Employee, PositionHistory } from '../../types';
+import { Employee, PositionHistory } from '../../types';
 import { mockEmployees, mockPositionHistory } from '../../data/mockData';
-
-interface MyProfileProps {
-    user: User;
-}
+import { useAuth } from '../../context/AuthContext';
 
 const DetailRow: React.FC<{ label: string; value: React.ReactNode }> = ({ label, value }) => (
     <div className="grid grid-cols-3 gap-4 py-2 border-b border-gray-200 dark:border-gray-600 last:border-none">
@@ -15,7 +12,9 @@ const DetailRow: React.FC<{ label: string; value: React.ReactNode }> = ({ label,
     </div>
 );
 
-const MyProfile: React.FC<MyProfileProps> = ({ user }) => {
+const MyProfile: React.FC = () => {
+    const { user } = useAuth();
+    if (!user) return null;
     const employeeData: Employee | undefined = useMemo(() => {
         return mockEmployees.find(e => e.email.toLowerCase() === user.email.toLowerCase());
     }, [user.email]);

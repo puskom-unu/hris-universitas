@@ -1,12 +1,9 @@
 
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { View, User } from '../../types';
+import { View } from '../../types';
 import { rolePermissions } from '../../config/roles';
-
-interface SidebarProps {
-  user: User;
-}
+import { useAuth } from '../../context/AuthContext';
 
 interface NavItemProps {
   to: string;
@@ -32,7 +29,9 @@ const NavItem: React.FC<NavItemProps> = ({ to, label, icon }) => (
   </li>
 );
 
-const Sidebar: React.FC<SidebarProps> = ({ user }) => {
+const Sidebar: React.FC = () => {
+  const { user } = useAuth();
+  if (!user) return null;
   const availableViews = rolePermissions[user.role] || [];
 
   const navItems = [

@@ -2,17 +2,17 @@
 import React, { useState, useEffect } from 'react';
 import Modal from '../shared/Modal';
 import Button from '../shared/Button';
-import { User } from '../../types';
 import { mockUsers } from '../../data/mockData';
+import { useAuth } from '../../context/AuthContext';
 
 interface UserProfileModalProps {
   isOpen: boolean;
   onClose: () => void;
-  user: User;
-  onUpdateUser: (updatedUser: User) => void;
 }
 
-const UserProfileModal: React.FC<UserProfileModalProps> = ({ isOpen, onClose, user, onUpdateUser }) => {
+const UserProfileModal: React.FC<UserProfileModalProps> = ({ isOpen, onClose }) => {
+    const { user, updateUser } = useAuth();
+    if (!user) return null;
     const [activeTab, setActiveTab] = useState('profile');
     const [profileData, setProfileData] = useState({ name: '', email: '', whatsappNumber: '' });
     const [passwordData, setPasswordData] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
@@ -57,7 +57,7 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({ isOpen, onClose, us
 
     const handleProfileSave = () => {
         if (validateProfile()) {
-            onUpdateUser({ ...user, ...profileData });
+              updateUser({ ...user, ...profileData });
             onClose();
         }
     };
@@ -102,7 +102,7 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({ isOpen, onClose, us
 
     const handleUpdateAvatar = () => {
         const newAvatarUrl = `https://picsum.photos/seed/${Date.now()}/100/100`;
-        onUpdateUser({ ...user, avatarUrl: newAvatarUrl });
+          updateUser({ ...user, avatarUrl: newAvatarUrl });
     };
 
     const TabButton: React.FC<{tabName: string, label: string}> = ({ tabName, label }) => (
