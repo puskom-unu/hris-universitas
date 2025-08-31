@@ -3,13 +3,13 @@ main = "src/index.ts"
 compatibility_date = "2024-10-12"
 
 [[d1_databases]]
-#binding = "DB"
-#database_name = "HRIS_DB"
-#database_id = "YOUR_D1_DATABASE_ID"
+binding = "DB"
+database_name = "hris_db"
+database_id = "eebc5126-6293-47ff-b689-b3403e9baf66"
 
 [[r2_buckets]]
-#binding = "BUCKET"
-#bucket_name = "hris-bucket"
+binding = "BUCKET"
+bucket_name = "hrisunugha"
 
 [vars]
-#PUBLIC_R2_URL = "https://example.r2.dev/your-bucket"
+PUBLIC_R2_URL = "https://pub-1745c06580e843f395fc950e6d98f155.r2.dev"
