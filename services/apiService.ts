@@ -2,7 +2,8 @@ import { D1DatabaseSettings, R2StorageSettings } from '../types';
 import { API_BASE_URL } from '../config/api';
 
 const jsonFetch = async (path: string, options: RequestInit = {}) => {
-  const res = await fetch(`${API_BASE_URL}${path}`, {
+  const url = API_BASE_URL ? new URL(path, API_BASE_URL).toString() : path;
+  const res = await fetch(url, {
     headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
     ...options,
   });
