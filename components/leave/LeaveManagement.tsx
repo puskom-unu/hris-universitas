@@ -4,13 +4,14 @@ import React, { useState, useMemo, useEffect } from 'react';
 import Card from '../shared/Card';
 import Button from '../shared/Button';
 import { mockLeaveRequests, mockWahaSettings, mockEmployees } from '../../data/mockData';
-import { LeaveRequest, LeaveStatus, User } from '../../types';
+import { LeaveRequest, LeaveStatus } from '../../types';
 import Pagination from '../shared/Pagination';
 import ConfirmationModal from '../shared/ConfirmationModal';
 import { sendWhatsappMessage } from '../../services/notificationService';
 import AddLeaveRequestModal from './AddLeaveRequestModal';
 import LeaveRequestDetailModal from './LeaveRequestDetailModal';
 import { ROLES } from '../../config/roles';
+import { useAuth } from '../../context/AuthContext';
 
 const StatusBadge: React.FC<{ status: LeaveStatus }> = ({ status }) => {
     const statusClasses = {
@@ -25,11 +26,9 @@ const StatusBadge: React.FC<{ status: LeaveStatus }> = ({ status }) => {
     );
 };
 
-interface LeaveManagementProps {
-    user: User;
-}
-
-const LeaveManagement: React.FC<LeaveManagementProps> = ({ user }) => {
+const LeaveManagement: React.FC = () => {
+    const { user } = useAuth();
+    if (!user) return null;
     const isEmployeeView = user.role === ROLES.PEGAWAI;
     const currentEmployee = useMemo(() => mockEmployees.find(e => e.email === user.email), [user.email]);
 
@@ -258,7 +257,6 @@ const LeaveManagement: React.FC<LeaveManagementProps> = ({ user }) => {
                 isOpen={!!requestToView}
                 onClose={handleCloseDetailModal}
                 request={requestToView}
-                user={user}
                 onApprove={(req) => setActionToConfirm({ request: req, newStatus: LeaveStatus.APPROVED })}
                 onReject={(req) => setActionToConfirm({ request: req, newStatus: LeaveStatus.REJECTED })}
             />

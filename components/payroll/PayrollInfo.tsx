@@ -4,15 +4,14 @@ import Card from '../shared/Card';
 import Button from '../shared/Button';
 import Modal from '../shared/Modal';
 import PayslipView from './PayslipView';
-import { User, Payslip, Employee } from '../../types';
+import { Payslip, Employee } from '../../types';
 import { mockEmployees, mockPayslips } from '../../data/mockData';
 import Pagination from '../shared/Pagination';
+import { useAuth } from '../../context/AuthContext';
 
-interface PayrollInfoProps {
-    user: User;
-}
-
-const PayrollInfo: React.FC<PayrollInfoProps> = ({ user }) => {
+const PayrollInfo: React.FC = () => {
+    const { user } = useAuth();
+    if (!user) return null;
     const [selectedPayslip, setSelectedPayslip] = useState<Payslip | null>(null);
     const [payslipToPrint, setPayslipToPrint] = useState<Payslip | null>(null);
     const [currentPage, setCurrentPage] = useState(1);

@@ -3,15 +3,15 @@
 import React from 'react';
 import Modal from '../shared/Modal';
 import Button from '../shared/Button';
-import { LeaveRequest, LeaveStatus, User } from '../../types';
+import { LeaveRequest, LeaveStatus } from '../../types';
 import { mockEmployees } from '../../data/mockData';
 import { ROLES } from '../../config/roles';
+import { useAuth } from '../../context/AuthContext';
 
 interface LeaveRequestDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
   request: LeaveRequest | null;
-  user: User;
   onApprove: (request: LeaveRequest) => void;
   onReject: (request: LeaveRequest) => void;
 }
@@ -36,8 +36,9 @@ const StatusBadge: React.FC<{ status: LeaveStatus }> = ({ status }) => {
     );
 };
 
-const LeaveRequestDetailModal: React.FC<LeaveRequestDetailModalProps> = ({ isOpen, onClose, request, user, onApprove, onReject }) => {
-  if (!isOpen || !request) return null;
+const LeaveRequestDetailModal: React.FC<LeaveRequestDetailModalProps> = ({ isOpen, onClose, request, onApprove, onReject }) => {
+  const { user } = useAuth();
+  if (!isOpen || !request || !user) return null;
 
   const employee = mockEmployees.find(e => e.id === request.employeeId);
   const canTakeAction = user.role !== ROLES.PEGAWAI;

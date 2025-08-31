@@ -1,15 +1,13 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { User } from '../../types';
 import UserProfileModal from '../user/UserProfileModal';
+import { useAuth } from '../../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
-interface HeaderProps {
-    user: User;
-    onUpdateUser: (user: User) => void;
-    onLogout: () => void;
-}
-
-const Header: React.FC<HeaderProps> = ({ user, onUpdateUser, onLogout }) => {
+const Header: React.FC = () => {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  if (!user) return null;
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -71,7 +69,7 @@ const Header: React.FC<HeaderProps> = ({ user, onUpdateUser, onLogout }) => {
                     </a>
                     <a
                         href="#"
-                        onClick={(e) => { e.preventDefault(); onLogout(); }}
+                        onClick={(e) => { e.preventDefault(); logout(); navigate('/'); }}
                         className="block px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700"
                     >
                        <i className="fas fa-sign-out-alt w-5 mr-2"></i>Logout
@@ -82,12 +80,10 @@ const Header: React.FC<HeaderProps> = ({ user, onUpdateUser, onLogout }) => {
       </div>
     </header>
 
-    <UserProfileModal
-        isOpen={isProfileModalOpen}
-        onClose={() => setIsProfileModalOpen(false)}
-        user={user}
-        onUpdateUser={onUpdateUser}
-    />
+      <UserProfileModal
+          isOpen={isProfileModalOpen}
+          onClose={() => setIsProfileModalOpen(false)}
+      />
     </>
   );
 };

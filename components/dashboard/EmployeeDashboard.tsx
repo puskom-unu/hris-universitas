@@ -4,13 +4,12 @@ import StatCard from './StatCard';
 import Card from '../shared/Card';
 import { mockAttendance, mockEmployees, mockLeaveRequests, mockLeaveTypes } from '../../data/mockData';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { User, LeaveStatus } from '../../types';
+import { LeaveStatus } from '../../types';
+import { useAuth } from '../../context/AuthContext';
 
-interface EmployeeDashboardProps {
-    user: User;
-}
-
-const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({ user }) => {
+const EmployeeDashboard: React.FC = () => {
+    const { user } = useAuth();
+    if (!user) return null;
     const employee = useMemo(() => mockEmployees.find(e => e.email === user.email), [user.email]);
 
     const stats = useMemo(() => {
