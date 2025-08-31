@@ -18,3 +18,14 @@ View your app in AI Studio: https://ai.studio/apps/drive/1RQGhonswnVxkIaWJVIzkC4
 2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
 3. Run the app:
    `npm run dev`
+
+## Backend
+
+This repository now ships with a Cloudflare Worker backend (see [`worker/`](worker/)) which uses **D1** for configuration storage and **R2** for object storage. To run it locally:
+
+1. `cd worker`
+2. `npm install`
+3. Initialize the database: `wrangler d1 execute HRIS_DB --file ./schema.sql`
+4. Start the worker: `npm run dev`
+
+The frontend expects the worker URL in the `VITE_API_BASE_URL` environment variable. Set it in `.env.local` before running `npm run dev`.
