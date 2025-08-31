@@ -3,9 +3,15 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Modal from '../shared/Modal';
 import Button from '../shared/Button';
-import { LeaveRequest, Employee, LeaveStatus } from '../../types';
-import { mockEmployees, mockLeaveTypes, mockLeaveRequests, mockR2Settings } from '../../data/mockData';
-import { generatePresignedUrl, uploadFileWithPresignedUrl } from '../../services/apiService';
+import { LeaveRequest, Employee, LeaveStatus, LeaveType } from '../../types';
+import {
+  generatePresignedUrl,
+  uploadFileWithPresignedUrl,
+  fetchLeaveTypes,
+  getR2Settings,
+} from '../../services/apiService';
+import { useEmployees } from '../../hooks/useEmployees';
+import { useLeaveRequests } from '../../hooks/useLeaveRequests';
 
 interface AddLeaveRequestModalProps {
   isOpen: boolean;
@@ -29,10 +35,14 @@ const AddLeaveRequestModal: React.FC<AddLeaveRequestModalProps> = ({ isOpen, onC
     const [employeeSearchTerm, setEmployeeSearchTerm] = useState('');
     const [isEmployeeDropdownOpen, setEmployeeDropdownOpen] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
+    const [leaveTypes, setLeaveTypes] = useState<LeaveType[]>([]);
+    const [r2Enabled, setR2Enabled] = useState(false);
     const searchRef = useRef<HTMLDivElement>(null);
+    const { employees } = useEmployees();
+    const { leaveRequests } = useLeaveRequests();
 
-    const activeEmployees = useMemo(() => mockEmployees.filter(e => e.status === 'Active'), []);
-    
+    const activeEmployees = useMemo(() => employees.filter(e => e.status === 'Active'), [employees]);
+
     const filteredEmployees = useMemo(() => {
         if (!employeeSearchTerm || employee) return []; // Don't filter if an employee is already set
         return activeEmployees.filter(emp =>
@@ -49,12 +59,16 @@ const AddLeaveRequestModal: React.FC<AddLeaveRequestModalProps> = ({ isOpen, onC
             setEmployeeDropdownOpen(false);
             setIsUploading(false);
         } else if (employee) {
-            // Pre-fill form if employee prop is provided
             setFormData(prev => ({ ...prev, employeeId: employee.id }));
             setEmployeeSearchTerm(`${employee.name} (${employee.nip})`);
         }
     }, [isOpen, employee]);
-    
+
+    useEffect(() => {
+        fetchLeaveTypes().then(setLeaveTypes);
+        getR2Settings().then(s => setR2Enabled(s.enabled)).catch(() => setR2Enabled(false));
+    }, []);
+
     // Click outside handler for employee search
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -119,7 +133,7 @@ const AddLeaveRequestModal: React.FC<AddLeaveRequestModalProps> = ({ isOpen, onC
             const newStartDate = new Date(formData.startDate);
             const newEndDate = new Date(formData.endDate);
 
-            const hasOverlap = mockLeaveRequests.some(req => {
+            const hasOverlap = leaveRequests.some(req => {
                 // Check only for the selected employee and non-rejected requests
                 if (req.employeeId === formData.employeeId && req.status !== LeaveStatus.REJECTED) {
                     const existingStartDate = new Date(req.startDate);
@@ -147,7 +161,7 @@ const AddLeaveRequestModal: React.FC<AddLeaveRequestModalProps> = ({ isOpen, onC
         const { document, ...requestData } = formData;
         let documentUrl: string | undefined = undefined;
 
-        if (document && mockR2Settings.enabled) {
+        if (document && r2Enabled) {
             setIsUploading(true);
             try {
                 // Step 1: Get a pre-signed URL from our backend
@@ -231,7 +245,7 @@ const AddLeaveRequestModal: React.FC<AddLeaveRequestModalProps> = ({ isOpen, onC
                     className={`bg-gray-50 border ${errors.leaveType ? 'border-red-500' : 'border-gray-300'} text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600`}
                 >
                     <option value="">-- Pilih Jenis Cuti --</option>
-                    {mockLeaveTypes.map(lt => (
+                    {leaveTypes.map(lt => (
                         <option key={lt.id} value={lt.name}>{lt.name}</option>
                     ))}
                 </select>

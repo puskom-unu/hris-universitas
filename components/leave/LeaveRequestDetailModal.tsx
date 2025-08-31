@@ -4,9 +4,9 @@ import React from 'react';
 import Modal from '../shared/Modal';
 import Button from '../shared/Button';
 import { LeaveRequest, LeaveStatus } from '../../types';
-import { mockEmployees } from '../../data/mockData';
 import { ROLES } from '../../config/roles';
 import { useAuth } from '../../context/AuthContext';
+import { useEmployees } from '../../hooks/useEmployees';
 
 interface LeaveRequestDetailModalProps {
   isOpen: boolean;
@@ -38,9 +38,10 @@ const StatusBadge: React.FC<{ status: LeaveStatus }> = ({ status }) => {
 
 const LeaveRequestDetailModal: React.FC<LeaveRequestDetailModalProps> = ({ isOpen, onClose, request, onApprove, onReject }) => {
   const { user } = useAuth();
+  const { employees } = useEmployees();
   if (!isOpen || !request || !user) return null;
 
-  const employee = mockEmployees.find(e => e.id === request.employeeId);
+  const employee = employees.find(e => e.id === request.employeeId);
   const canTakeAction = user.role !== ROLES.PEGAWAI;
 
   const handleApprove = () => {

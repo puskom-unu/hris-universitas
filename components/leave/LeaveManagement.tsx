@@ -3,7 +3,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import Card from '../shared/Card';
 import Button from '../shared/Button';
-import { mockLeaveRequests, mockWahaSettings, mockEmployees } from '../../data/mockData';
+import { mockWahaSettings } from '../../data/mockData';
 import { LeaveRequest, LeaveStatus } from '../../types';
 import Pagination from '../shared/Pagination';
 import ConfirmationModal from '../shared/ConfirmationModal';
@@ -12,6 +12,8 @@ import AddLeaveRequestModal from './AddLeaveRequestModal';
 import LeaveRequestDetailModal from './LeaveRequestDetailModal';
 import { ROLES } from '../../config/roles';
 import { useAuth } from '../../context/AuthContext';
+import { useLeaveRequests } from '../../hooks/useLeaveRequests';
+import { useEmployees } from '../../hooks/useEmployees';
 
 const StatusBadge: React.FC<{ status: LeaveStatus }> = ({ status }) => {
     const statusClasses = {
@@ -28,20 +30,19 @@ const StatusBadge: React.FC<{ status: LeaveStatus }> = ({ status }) => {
 
 const LeaveManagement: React.FC = () => {
     const { user } = useAuth();
+    const { leaveRequests, addRequest, updateRequest } = useLeaveRequests();
+    const { employees } = useEmployees();
     if (!user) return null;
     const isEmployeeView = user.role === ROLES.PEGAWAI;
-    const currentEmployee = useMemo(() => mockEmployees.find(e => e.email === user.email), [user.email]);
+    const currentEmployee = useMemo(() => employees.find(e => e.email === user.email), [user.email, employees]);
 
-    // Initial data is filtered for employees, or shows all for admins.
-    const initialData = useMemo(() => {
-        const allRequests = [...mockLeaveRequests]; // Create a mutable copy
+    const requestsForView = useMemo(() => {
         if (isEmployeeView && currentEmployee) {
-            return allRequests.filter(req => req.employeeId === currentEmployee.id);
+            return leaveRequests.filter(req => req.employeeId === currentEmployee.id);
         }
-        return allRequests;
-    }, [isEmployeeView, currentEmployee]);
+        return leaveRequests;
+    }, [leaveRequests, isEmployeeView, currentEmployee]);
 
-    const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>(initialData);
     const [currentPage, setCurrentPage] = useState(1);
     const [actionToConfirm, setActionToConfirm] = useState<{ request: LeaveRequest, newStatus: LeaveStatus } | null>(null);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -50,13 +51,13 @@ const LeaveManagement: React.FC = () => {
     
     const leavePeriods = useMemo(() => {
         const periods = new Set(
-            leaveRequests.map(req => {
+            requestsForView.map(req => {
                 const date = new Date(req.startDate);
                 return new Intl.DateTimeFormat('id-ID', { year: 'numeric', month: 'long' }).format(date);
             })
         );
         return ['All', ...Array.from(periods)];
-    }, [leaveRequests]);
+    }, [requestsForView]);
 
     const [periodFilter, setPeriodFilter] = useState('All');
 
@@ -65,7 +66,7 @@ const LeaveManagement: React.FC = () => {
     }, [searchTerm, periodFilter]);
 
     const filteredRequests = useMemo(() => {
-        return leaveRequests.filter(request => {
+        return requestsForView.filter(request => {
             const matchesSearch = isEmployeeView || request.employeeName.toLowerCase().includes(searchTerm.toLowerCase());
             
             const requestDate = new Date(request.startDate);
@@ -74,7 +75,7 @@ const LeaveManagement: React.FC = () => {
 
             return matchesSearch && matchesPeriod;
         }).sort((a,b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
-    }, [searchTerm, periodFilter, leaveRequests, isEmployeeView]);
+    }, [searchTerm, periodFilter, requestsForView, isEmployeeView]);
 
 
     const RECORDS_PER_PAGE = 10;
@@ -88,7 +89,7 @@ const LeaveManagement: React.FC = () => {
             return;
         }
 
-        const employee = mockEmployees.find(e => e.id === request.employeeId);
+        const employee = employees.find(e => e.id === request.employeeId);
         if (!employee || !employee.whatsappNumber) {
             console.error(`[Leave] Employee or WhatsApp number not found for ID: ${request.employeeId}`);
             return;
@@ -110,37 +111,14 @@ const LeaveManagement: React.FC = () => {
         if (actionToConfirm) {
              const updatedRequest = { ...actionToConfirm.request, status: actionToConfirm.newStatus, approver: user.name };
 
-            // Update local state
-            setLeaveRequests(prev => 
-                prev.map(req => req.id === actionToConfirm.request.id ? updatedRequest : req)
-            );
-            
-            // Also update the global mock data
-            const indexInMock = mockLeaveRequests.findIndex(req => req.id === actionToConfirm.request.id);
-            if (indexInMock > -1) {
-                mockLeaveRequests[indexInMock] = updatedRequest;
-            }
-
+            updateRequest(updatedRequest);
             triggerNotification(actionToConfirm.request, actionToConfirm.newStatus);
             setActionToConfirm(null);
         }
     };
 
     const handleAddLeaveRequest = (data: Omit<LeaveRequest, 'id' | 'status' | 'approver' | 'employeeName'>) => {
-        const employee = mockEmployees.find(e => e.id === data.employeeId);
-        if (!employee) return;
-
-        const newRequest: LeaveRequest = {
-            ...data,
-            id: `L-${Date.now()}`,
-            employeeName: employee.name,
-            status: LeaveStatus.PENDING,
-            approver: '', // Approver is set on approval
-        };
-        
-        // Add to both global mock data and local state
-        mockLeaveRequests.unshift(newRequest);
-        setLeaveRequests(prev => [newRequest, ...prev]);
+        addRequest(data);
         setIsAddModalOpen(false);
     };
     

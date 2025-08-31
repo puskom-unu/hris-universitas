@@ -1,16 +1,18 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import Card from '../shared/Card';
 import Button from '../shared/Button';
-import { mockAttendance, mockEmployees } from '../../data/mockData';
 import { AttendanceRecord } from '../../types';
 import Pagination from '../shared/Pagination';
 import { exportToExcel } from '../../services/reportService';
 import ImportAttendanceModal from './ImportAttendanceModal';
+import { useAttendanceRecords } from '../../hooks/useAttendance';
+import { useEmployees } from '../../hooks/useEmployees';
 
 const AttendanceManagement: React.FC = () => {
-    const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>(mockAttendance);
+    const { attendanceRecords, addRecord } = useAttendanceRecords();
+    const { employees } = useEmployees();
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
-    // Default dates are set to October 2023 to ensure mock data is visible
+    // Default dates are set to October 2023 to ensure sample data is visible
     const [startDate, setStartDate] = useState('2023-10-01');
     const [endDate, setEndDate] = useState('2023-10-31');
     const [statusFilter, setStatusFilter] = useState('All');
@@ -63,16 +65,14 @@ const AttendanceManagement: React.FC = () => {
         exportToExcel(dataToExport, `Laporan_Presensi_${startDate}_ke_${endDate}`, 'Data Presensi');
     };
 
-    const handleImport = (importedData: Omit<AttendanceRecord, 'id' | 'employeeName'>[]) => {
-        const newRecords: AttendanceRecord[] = importedData.map((record, index) => {
-            const employee = mockEmployees.find(e => e.id === record.employeeId);
-            return {
+    const handleImport = async (importedData: Omit<AttendanceRecord, 'id' | 'employeeName'>[]) => {
+        for (const record of importedData) {
+            const employee = employees.find(e => e.id === record.employeeId);
+            await addRecord({
                 ...record,
-                id: `A-import-${Date.now()}-${index}`,
                 employeeName: employee?.name || 'Nama Tidak Ditemukan',
-            };
-        });
-        setAttendanceRecords(prev => [...newRecords, ...prev]);
+            });
+        }
         setIsImportModalOpen(false);
     };
 
