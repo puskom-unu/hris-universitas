@@ -38,8 +38,24 @@ const StatusBadge: React.FC<{ status: LeaveStatus }> = ({ status }) => {
 
 const LeaveRequestDetailModal: React.FC<LeaveRequestDetailModalProps> = ({ isOpen, onClose, request, onApprove, onReject }) => {
   const { user } = useAuth();
-  const { employees } = useEmployees();
+  const { employees, loading, error } = useEmployees();
   if (!isOpen || !request || !user) return null;
+
+  if (loading) {
+    return (
+      <Modal isOpen={isOpen} onClose={onClose} title="Detail Pengajuan Cuti / Izin">
+        <p>Memuat data...</p>
+      </Modal>
+    );
+  }
+
+  if (error) {
+    return (
+      <Modal isOpen={isOpen} onClose={onClose} title="Detail Pengajuan Cuti / Izin">
+        <p className="text-red-500">Gagal memuat data pegawai.</p>
+      </Modal>
+    );
+  }
 
   const employee = employees.find(e => e.id === request.employeeId);
   const canTakeAction = user.role !== ROLES.PEGAWAI;

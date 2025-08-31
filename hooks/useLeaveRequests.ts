@@ -6,18 +6,29 @@ import {
   updateLeaveRequest as apiUpdateLeaveRequest,
   deleteLeaveRequest as apiDeleteLeaveRequest,
 } from '../services/apiService';
+import { logError } from '../utils/logging';
 
 let leaveRequestsCache: LeaveRequest[] | null = null;
 
 export const useLeaveRequests = () => {
   const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>(leaveRequestsCache || []);
+  const [loading, setLoading] = useState(!leaveRequestsCache);
+  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
     if (!leaveRequestsCache) {
-      fetchLeaveRequests().then(data => {
-        leaveRequestsCache = data;
-        setLeaveRequests(data);
-      });
+      setLoading(true);
+      fetchLeaveRequests()
+        .then(data => {
+          leaveRequestsCache = data;
+          setLeaveRequests(data);
+          setError(null);
+        })
+        .catch(err => {
+          setError(err);
+          logError(err);
+        })
+        .finally(() => setLoading(false));
     }
   }, []);
 
@@ -43,7 +54,7 @@ export const useLeaveRequests = () => {
     setLeaveRequests(leaveRequestsCache);
   };
 
-  return { leaveRequests, addRequest, updateRequest, deleteRequest };
+  return { leaveRequests, addRequest, updateRequest, deleteRequest, loading, error };
 };
 
 export default useLeaveRequests;
