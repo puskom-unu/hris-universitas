@@ -1,0 +1,14 @@
+{
+  "dashboard": "Dasbor",
+  "search": "Cari...",
+  "editProfile": "Edit Profil",
+  "logout": "Keluar",
+  "language": "Bahasa",
+  "english": "Inggris",
+  "indonesian": "Indonesia",
+  "welcomeBack": "Selamat Datang Kembali",
+  "email": "Alamat Email",
+  "password": "Kata Sandi",
+  "login": "Masuk",
+  "footerText": "© {{year}} HRIS UNUGHA | Hubungi Dukungan: Bidang Sumber Daya Manusia UNUGHA Cilacap"
+}

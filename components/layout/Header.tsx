@@ -3,8 +3,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import UserProfileModal from '../user/UserProfileModal';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { useLanguage } from '../../context/LanguageContext';
 
 const Header: React.FC = () => {
+  const { t } = useTranslation();
+  const { language, setLanguage } = useLanguage();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   if (!user) return null;
@@ -30,19 +34,27 @@ const Header: React.FC = () => {
     <header className="flex items-center justify-between h-20 px-6 bg-white dark:bg-gray-800 border-b dark:border-gray-700 flex-shrink-0">
       <div className="flex items-center">
         {/* Can be used for breadcrumbs or page title */}
-        <h2 className="text-2xl font-semibold text-gray-800 dark:text-white">Dashboard</h2>
+        <h2 className="text-2xl font-semibold text-gray-800 dark:text-white">{t('dashboard')}</h2>
       </div>
       <div className="flex items-center space-x-6">
         <div className="relative">
           <input
             type="text"
-            placeholder="Search..."
+            placeholder={t('search')}
             className="pl-10 pr-4 py-2 w-full max-w-xs bg-gray-100 dark:bg-gray-700 border border-transparent rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <span className="absolute inset-y-0 left-0 flex items-center pl-3">
             <i className="fas fa-search text-gray-400"></i>
           </span>
         </div>
+        <select
+          value={language}
+          onChange={(e) => setLanguage(e.target.value)}
+          className="bg-gray-100 dark:bg-gray-700 border border-transparent rounded-lg px-3 py-2 text-sm text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="en">{t('english')}</option>
+          <option value="id">{t('indonesian')}</option>
+        </select>
         <button className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
           <i className="fas fa-bell fa-lg"></i>
         </button>
@@ -65,14 +77,14 @@ const Header: React.FC = () => {
                         }}
                         className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
                     >
-                        <i className="fas fa-user-edit w-5 mr-2"></i>Edit Profil
+                        <i className="fas fa-user-edit w-5 mr-2"></i>{t('editProfile')}
                     </a>
                     <a
                         href="#"
                         onClick={(e) => { e.preventDefault(); logout(); navigate('/'); }}
                         className="block px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700"
                     >
-                       <i className="fas fa-sign-out-alt w-5 mr-2"></i>Logout
+                       <i className="fas fa-sign-out-alt w-5 mr-2"></i>{t('logout')}
                     </a>
                 </div>
             )}

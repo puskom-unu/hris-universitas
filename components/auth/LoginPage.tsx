@@ -3,6 +3,7 @@ import Button from '../shared/Button';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { loginSchema, LoginFormData } from './schema';
+import { useTranslation } from 'react-i18next';
 
 interface LoginPageProps {
   onLogin: (email: string, password: string) => void;
@@ -10,6 +11,7 @@ interface LoginPageProps {
 }
 
 const LoginPage: React.FC<LoginPageProps> = ({ onLogin, loginError }) => {
+  const { t } = useTranslation();
   const {
     register,
     handleSubmit,
@@ -33,7 +35,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, loginError }) => {
             <i className="fas fa-university fa-3x text-blue-600"></i>
             <h1 className="text-3xl font-bold ml-4 text-gray-800 dark:text-white">HRIS UNUGHA</h1>
           </div>
-          <h2 className="text-xl text-gray-600 dark:text-gray-300">Selamat Datang Kembali</h2>
+          <h2 className="text-xl text-gray-600 dark:text-gray-300">{t('welcomeBack')}</h2>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)} noValidate>
           {loginError && (
@@ -46,28 +48,28 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, loginError }) => {
           )}
           <div className="rounded-md shadow-sm -space-y-px">
             <div>
-              <label htmlFor="email-address" className="sr-only">Alamat Email</label>
+              <label htmlFor="email-address" className="sr-only">{t('email')}</label>
               <input
                 id="email-address"
                 type="email"
                 autoComplete="email"
                 {...register('email')}
                 className={`appearance-none rounded-none relative block w-full px-3 py-2 border placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white ${errors.email ? 'border-red-500' : 'border-gray-300'}`}
-                placeholder="Alamat Email"
+                placeholder={t('email')}
               />
               {errors.email && (
                 <p className="mt-1 text-xs text-red-600 dark:text-red-500">{errors.email.message}</p>
               )}
             </div>
             <div>
-              <label htmlFor="password-for-login" className="sr-only">Kata Sandi</label>
+              <label htmlFor="password-for-login" className="sr-only">{t('password')}</label>
               <input
                 id="password-for-login"
                 type="password"
                 autoComplete="current-password"
                 {...register('password')}
                 className={`appearance-none rounded-none relative block w-full px-3 py-2 border placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white ${errors.password ? 'border-red-500' : 'border-gray-300'}`}
-                placeholder="Kata Sandi"
+                placeholder={t('password')}
               />
               {errors.password && (
                 <p className="mt-1 text-xs text-red-600 dark:text-red-500">{errors.password.message}</p>
@@ -76,7 +78,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, loginError }) => {
           </div>
           <div>
             <Button type="submit" className="w-full" disabled={!isValid}>
-              Login
+              {t('login')}
             </Button>
           </div>
         </form>

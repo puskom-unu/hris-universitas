@@ -1,0 +1,14 @@
+{
+  "dashboard": "Dashboard",
+  "search": "Search...",
+  "editProfile": "Edit Profile",
+  "logout": "Logout",
+  "language": "Language",
+  "english": "English",
+  "indonesian": "Indonesian",
+  "welcomeBack": "Welcome Back",
+  "email": "Email Address",
+  "password": "Password",
+  "login": "Login",
+  "footerText": "© {{year}} HRIS UNUGHA | Contact Support: Human Resources Department UNUGHA Cilacap"
+}
